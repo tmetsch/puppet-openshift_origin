@@ -1,280 +1,472 @@
-class openshift::node(
-  $domain = 'openshift.local',
-  $gateway = '',
-  $password = 'marionette',
-  $broker_rsync_key = '',
-  $broker_ipaddress = '',
-  $broker_fqdn = '',
-) {
+class openshift_origin::node{
+  ensure_resource( 'package', 'rubygem-openshift-origin-node',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
 
-  yumrepo { "openshift-node":
-    name => "openshift-node",
-    baseurl => 'https://mirror.openshift.com/pub/origin-server/nightly/enterprise/2012-11-15/Node/x86_64/os/',
-    enabled => 1,
-    gpgcheck => 0,
+  ensure_resource( 'package', 'openshift-origin-node-util',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
+
+  ensure_resource( 'package', 'pam_openshift',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
+
+  ensure_resource( 'package', 'openshift-origin-node-proxy',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
+
+  ensure_resource( 'package', 'openshift-origin-port-proxy',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
+
+  ensure_resource( 'package', 'openshift-origin-msg-node-mcollective',
+    {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
+
+  ensure_resource( 'selboolean', 'httpd_run_stickshift', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'allow_polyinstantiation', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'httpd_can_network_connect', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'httpd_can_network_relay', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'httpd_read_user_content', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'httpd_enable_homedirs', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'selboolean', 'httpd_execmem', {
+    persistent => true,
+    value => 'on'
+  })
+
+  ensure_resource( 'package', 'git', { ensure  => present } )
+  ensure_resource( 'package', 'make', { ensure  => present } )
+
+  if $::openshift_origin::configure_firewall == true {
+    exec { 'Open HTTP port for Node-webproxy':
+      command => "/usr/sbin/lokkit --port=8000:tcp"
+    }
+    exec { 'Open HTTPS port for Node-webproxy':
+      command => "/usr/sbin/lokkit --port=8443:tcp"
+    }
+  }else{
+    warning 'Please ensure that ports 80, 443, 8000, 8443 are open for web requests'
   }
 
-  yumrepo { "openshift-jboss":
-    name => "openshift-jboss",
-    baseurl => 'https://mirror.openshift.com/pub/origin-server/nightly/enterprise/2012-11-15/JBoss_EAP6_Cartridge/x86_64/os/',
-    enabled => 1,
-    gpgcheck => 0,
+  file { 'node servername config':
+    ensure   => present,
+    path     =>
+      '/etc/httpd/conf.d/000001_openshift_origin_node_servername.conf',
+    content  =>
+      template('openshift_origin/node/openshift-origin-node_servername.conf.erb'),
+    owner    => 'root',
+    group    => 'root',
+    mode     => '0644',
+    require  => Package['rubygem-openshift-origin-node'],
   }
 
-  file { "node resolver":
-    path => "/etc/resolv.conf",
-    content => template("openshift/resolv.conf.node.erb"),
-    owner => root, group => root, mode => 0644,
+  file { 'openshift node config':
+    ensure   => present,
+    path     => '/etc/openshift/node.conf',
+    content  => template('openshift_origin/node/node.conf.erb'),
+    require  => Package['rubygem-openshift-origin-node'],
+    owner    => 'root',
+    group    => 'root',
+    mode     => '0644',
   }
 
-  file { "/root/.ssh":
-    ensure => directory,
-    owner => root, group => root, mode => 0700,
+  if ! defined(File['mcollective client config']) {
+    file { 'mcollective client config':
+      ensure   => present,
+      path     => '/etc/mcollective/client.cfg',
+      content  => template('openshift_origin/mcollective-client.cfg.erb'),
+      owner    => 'root',
+      group    => 'root',
+      mode     => '0644',
+      require  => Package['mcollective'],
+    }
   }
 
-  define line($file, $line, $ensure = 'present') {
-      case $ensure {
-          default: { err ( "unknown ensure value ${ensure}" ) }
-          present: {
-              exec { "/bin/echo '${line}' >> '${file}'":
-                  unless => "/bin/grep '${line}' '${file}'"
-              }
-          }
-          absent: {
-              exec { "/usr/bin/perl -ni -e 'print unless /^\\Q${line}\\E\$/' '${file}'":
-                  onlyif => "/bin/grep '${line}' '${file}'"
-              }
-          }
+  if ! defined(File['mcollective server config']) {
+    file { 'mcollective server config':
+      ensure  => present,
+      path    => '/etc/mcollective/server.cfg',
+      content => template('openshift_origin/mcollective-server.cfg.erb'),
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Package['mcollective'],
+    }
+  }
+
+  if $::openshift_origin::configure_fs_quotas == true {
+    mount { '/var/lib/openshift':
+      ensure    => present,
+      device    => $::openshift_origin::oo_device,
+      fstype    => 'ext4',
+      options   => 'defaults,usrjquota=aquota.user,jqfmt=vfsv0',
+      remounts  => true,
+      dump      => 1,
+      pass      => 1,
+      name      => $::openshift_origin::oo_mount,
+      require   => [
+        Yumrepo['openshift-origin'],
+        Package['rubygem-openshift-origin-node']
+      ]
+    }
+
+    exec { 'quota on':
+      creates     => '/aquota.user',
+      command     =>
+        "/sbin/quotaoff ${::openshift_origin::oo_mount} ; \
+         /sbin/quotacheck -cmug ${::openshift_origin::oo_mount} && \
+         /sbin/restorecon -rv ${::openshift_origin::oo_mount}/aquota.user && \
+         /sbin/quotaon ${::openshift_origin::oo_mount}",
+      refreshonly => true,
+      subscribe   => Mount['/var/lib/openshift']
+    }
+
+    Mount['/var/lib/openshift'] -> Exec['quota on']
+  }else{
+    warning 'Please ensure that quotas are enabled for /var/lib/openshift'
+  }
+
+  if $::openshift_origin::configure_cgroups == true {
+    case $::operatingsystem {
+      'Fedora' : {
+        file { 'fedora cgroups config':
+          ensure  => present,
+          path    => '/etc/systemd/system.conf',
+          content => template('openshift_origin/node/system.conf.erb'),
+          owner   => 'root',
+          group   => 'root',
+          mode    => '0644',
+        }
       }
+      default: {
+        #no changes required
+      }
+    }
+
+    file { '/cgroup':
+      ensure => directory,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0755',
+    }
+
+    file { 'cgroups config':
+      ensure  => present,
+      path    => '/etc/cgconfig.conf',
+      content => template('openshift_origin/node/cgconfig.conf.erb'),
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+    }
+
+    if $::openshift_origin::enable_network_services == true {
+      service { [
+        'cgconfig',
+        'cgred',
+        'openshift-cgroups',
+        'openshift-port-proxy',
+      ]:
+        require => [
+          Package['rubygem-openshift-origin-node'],
+          Package['openshift-origin-node-util'],
+          Package['openshift-origin-node-proxy'],
+          Package['openshift-origin-port-proxy']
+        ],
+        enable  => true,
+      }
+    }else{
+      warning 'Please ensure that cgconfig, cgred, openshift-cgroups, openshift-port-proxy are running on all nodes'
+    }
+  }else{
+    warning 'Please enable that cgroups are enabled with the following mount points:'
+    warning 'cpuset  = /cgroup/cpuset;'
+    warning 'cpu     = /cgroup/all;'
+    warning 'cpuacct = /cgroup/all;'
+    warning 'memory  = /cgroup/all;'
+    warning 'devices = /cgroup/devices;'
+    warning 'freezer = /cgroup/all;'
+    warning 'net_cls = /cgroup/all;'
+    warning 'blkio   = /cgroup/blkio;'
   }
 
-  file { "node authorized_keys":
-    path => "/root/.ssh/authorized_keys",
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-    require => File["/root/.ssh"],
+  if $::openshift_origin::configure_pam == true {
+    $pam_sshd_template = $::operatingsystem ? {
+      'Fedora' => template('openshift_origin/node/pam.sshd-fedora.erb'),
+      default  => template('openshift_origin/node/pam.sshd-rhel.erb'),
+    }
+
+    file { 'openshift node pam sshd':
+      ensure  => present,
+      path    => '/etc/pam.d/sshd',
+      content => $pam_sshd_template,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Package['pam_openshift'],
+    }
+
+    $pam_runuser_template = $::operatingsystem ? {
+      default => template('openshift_origin/node/pam.runuser-fedora.erb'),
+    }
+
+    file { 'openshift node pam runuser':
+      ensure  => present,
+      path    => '/etc/pam.d/runuser',
+      content => $pam_runuser_template,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Package['pam_openshift'],
+    }
+
+    $pam_runuser_l_template = $::operatingsystem ? {
+      default => template('openshift_origin/node/pam.runuser-l-fedora.erb'),
+    }
+
+    file { 'openshift node pam runuser-l':
+      ensure  => present,
+      path    => '/etc/pam.d/runuser-l',
+      content => $pam_runuser_l_template,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Package['pam_openshift'],
+    }
+
+    $pam_su_template = $::operatingsystem ? {
+      'Fedora' => template('openshift_origin/node/pam.su-fedora.erb'),
+      default  => template('openshift_origin/node/pam.su-rhel.erb'),
+    }
+
+    file { 'openshift node pam su':
+      ensure  => present,
+      path    => '/etc/pam.d/su',
+      content => $pam_su_template,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => Package['pam_openshift'],
+    }
+
+    $pam_system_auth_ac_template = $::operatingsystem ? {
+      'Fedora' => template('openshift_origin/node/pam.system-auth-ac-fedora.erb'),
+      default  => template('openshift_origin/node/pam.system-auth-ac-rhel.erb'),
+    }
+
+    file { 'openshift node pam system-auth-ac':
+      ensure     => present,
+      path       => '/etc/pam.d/system-auth-ac',
+      content    => $pam_system_auth_ac_template,
+      owner      => 'root',
+      group      => 'root',
+      mode       => '0644',
+      require => Package['pam_openshift'],
+    }
+    
+    $os_all_unmanaged_users = [['root','adm','apache'], $::openshift_origin::os_unmanaged_users]
+    file { 'openshift node pam-namespace sandbox.conf':
+      ensure     => present,
+      path       => '/etc/security/namespace.d/sandbox.conf',
+      content    => template('openshift_origin/node/namespace-d-sandbox.conf.erb'),
+      owner      => 'root',
+      group      => 'root',
+      mode       => '0644',
+      require => Package['pam_openshift'],
+    }
+    
+    file { 'openshift node pam-namespace tmp.conf':
+      ensure     => present,
+      path       => '/etc/security/namespace.d/tmp.conf',
+      content    => template('openshift_origin/node/namespace-d-tmp.conf.erb'),
+      owner      => 'root',
+      group      => 'root',
+      mode       => '0644',
+      require => Package['pam_openshift'],
+    }
+    
+    file { 'openshift node pam-namespace vartmp.conf':
+      ensure     => present,
+      path       => '/etc/security/namespace.d/vartmp.conf',
+      content    => template('openshift_origin/node/namespace-d-vartmp.conf.erb'),
+      owner      => 'root',
+      group      => 'root',
+      mode       => '0644',
+      require => Package['pam_openshift'],
+    }
+  }else{
+    warning 'Please configure pam on all nodes.'
   }
 
-  line { "add broker to authorized keys":
-    file => "/root/.ssh/authorized_keys",
-    line => "$broker_rsync_key",
+  file { 'sysctl config tweaks':
+    ensure  => present,
+    path    => '/etc/sysctl.conf',
+    content => template('openshift_origin/node/sysctl.conf.erb'),
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
   }
 
-  package { [mcollective, openshift-origin-msg-node-mcollective]:
-    require => Yumrepo[openshift-infrastructure],
-    ensure => present,
+  exec { 'Update sshd configs':
+    command => '/bin/echo \'AcceptEnv GIT_SSH\' >> \'/etc/ssh/sshd_config\'',
+    unless  => '/bin/grep -qFx \'AcceptEnv GIT_SSH\' \'/etc/ssh/sshd_config\''
   }
 
-  lokkit::services { 'openshift' :
-    services  => [ 'ssh', 'http', 'https', 'dns' ],
+  if $::openshift_origin::enable_network_services == true {
+    service { 'crond': enable  => true }
+
+    $openshift_init_provider = $::operatingsystem ? {
+      'Fedora' => 'systemd',
+      default  => ''
+    }
+
+    service { ['openshift-gears', 'openshift-node-web-proxy']:
+      require  => [
+        Package['rubygem-openshift-origin-node'],
+        Package['openshift-origin-node-util'],
+        Package['openshift-origin-node-proxy']
+      ],
+      provider => $openshift_init_provider,
+      enable   => true,
+    }
+
+    service { 'mcollective':
+      require => [
+        Package['mcollective']
+      ],
+      enable  => true,
+    }
+  }else{
+    warning 'Please ensure that mcollective, cron, openshift-gears, openshift-node-web-proxy are running on all nodes'
   }
 
-  # Required OpenShift services
-  service { [httpd, network, sshd]:
-    ensure => running,
-    enable => true,
-    require => File["openshift node config"],
-  }
-
-  # Database Services
-  service { [postgresql, mysqld]:
-    ensure => running,
-    enable => true,
-  }
-
-  file { "dhclient config":
-    path => "/etc/dhcp/dhclient-eth0.conf",
-    content => template("openshift/dhclient-eth0.conf.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "network sysconfig":
-    path => "/etc/sysconfig/network",
-    content => template("openshift/sysconfig-network.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  exec { "set hostname":
-    command => "/bin/hostname ${fqdn}",
-    require => File["network sysconfig"],
-  }
-
-  file { "mcollective server config":
-    path => "/etc/mcollective/server.cfg",
-    content => template("openshift/mcollective-server.cfg.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-    require => Package["mcollective"],
-  }
-
-  service { "mcollective":
-    ensure => running,
-    require => File["mcollective server config"],
-    subscribe => File["mcollective server config"],
-    enable => true,
-  }
-
-  #Install node rpms
-  package { [rubygem-openshift-origin-node, rubygem-passenger-native, openshift-origin-port-proxy, openshift-origin-node-util]:
-    require => Yumrepo["openshift-node"],
-    ensure => present,
-  }
-
-  #Install node cartridges
-  package { ["openshift-origin-cartridge-diy-0.1",
-             "openshift-origin-cartridge-jenkins-1.4",
-             "openshift-origin-cartridge-python-2.6",
-             "openshift-origin-cartridge-ruby-1.9-scl",
-             "openshift-origin-cartridge-cron-1.4",
-             "openshift-origin-cartridge-jenkins-client-1.4",
-             "openshift-origin-cartridge-mysql-5.1",
-             "openshift-origin-cartridge-ruby-1.8",
-             "openshift-origin-cartridge-haproxy-1.4",
-             "openshift-origin-cartridge-postgresql-8.4"]:
-    require => Yumrepo["openshift-node"],
-    ensure => present,
-  }
-
-  file { "cgroups config":
-    path => "/etc/cgconfig.conf",
-    content => template("openshift/cgconfig.conf.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "/cgroup":
-    ensure => directory,
-    owner => root, group => root, mode => 0755,
-  }
-
-  exec { "cgroups restorecon":
-    command => "/sbin/restorecon -rv /etc/cgconfig.* /cgroup",
+  exec { 'Restoring SELinux contexts':
+    command =>
+      '/sbin/restorecon -rv /etc/cgconfig.* \
+          /cgroup \
+          /var/lib/openshift \
+          /var/lib/openshift/.httpd.d/',
     require => [
-      File["/cgroup"],
-      File["cgroups config"],
+      File['/cgroup'],
+      File['cgroups config'],
+      Package['rubygem-openshift-origin-node']
     ],
   }
 
-  service { "cgconfig":
-    ensure => running,
-    require => Exec["cgroups restorecon"],
-    subscribe => File["cgroups config"],
-    enable => true,
+  case $::operatingsystem {
+    'Fedora' : {
+      exec { 'jenkins repo key':
+        command =>
+            '/usr/bin/rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key',
+        creates => '/etc/yum.repos.d/jenkins.repo'
+      }
+
+      yumrepo { 'jenkins':
+        name     => 'jenkins',
+        baseurl  => 'http://pkg.jenkins-ci.org/redhat',
+        enabled  => 1,
+        gpgcheck => 1,
+      }
+
+      Exec['jenkins repo key'] -> Yumrepo['jenkins']
+    }
+    default: {
+      #no changes required
+    }
   }
 
-  service { "cgred":
-    ensure => running,
-    require => Service["cgconfig"],
-    enable => true,
+  package {
+    [
+      'openshift-origin-cartridge-abstract',
+
+      'openshift-origin-cartridge-10gen-mms-agent-0.1',
+      'openshift-origin-cartridge-cron-1.4',
+      'openshift-origin-cartridge-diy-0.1',
+      'openshift-origin-cartridge-haproxy-1.4',
+      'openshift-origin-cartridge-jenkins-1.4',
+      'openshift-origin-cartridge-jenkins-client-1.4',
+      'openshift-origin-cartridge-mongodb-2.2',
+      'openshift-origin-cartridge-mysql-5.1',
+      'openshift-origin-cartridge-nodejs-0.6',
+      'openshift-origin-cartridge-perl-5.10',
+      'openshift-origin-cartridge-php-5.3',
+      'openshift-origin-cartridge-phpmyadmin-3.4',
+      'openshift-origin-cartridge-python-2.6',
+    ]:
+    ensure  => present,
+    require => [
+      Yumrepo[openshift-origin],
+      Yumrepo[openshift-origin-deps]
+    ],
   }
 
-  service { "openshift-cgroups":
-    ensure => running,
-    require => Service["cgred"],
-    enable => true,
+  case $::operatingsystem {
+    'Fedora' : {
+      package {
+        [
+          'openshift-origin-cartridge-postgresql-9.1',
+          'openshift-origin-cartridge-ruby-1.9',
+        ]:
+        ensure  => present,
+        require => [
+          Yumrepo[openshift-origin],
+          Yumrepo[openshift-origin-deps]
+        ],
+      }
+    }
+    default : {
+      package {
+        [
+          'openshift-origin-cartridge-postgresql-8.4',
+          'openshift-origin-cartridge-ruby-1.9-scl',
+        ]:
+        ensure  => present,
+        require => [
+          Yumrepo[openshift-origin],
+          Yumrepo[openshift-origin-deps]
+        ],
+      }
+    }
   }
-
-  selinux::boolean { [httpd_unified, httpd_can_network_connect,
-                      httpd_can_network_relay, httpd_read_user_content,
-                      httpd_enable_homedirs, httpd_run_stickshift,
-                      allow_polyinstantiation, named_write_master_zones,
-                      allow_ypbind]:
-    ensure => on
-  }
-
-  exec { "fixfiles rubygem-passenger":
-    command => "/sbin/fixfiles -R rubygem-passenger restore",
-  }
-
-  exec { "fixfiles mod_passenger":
-    command => "/sbin/fixfiles -R mod_passenger restore",
-  }
-
-  exec { "boolean restorecon":
-    command => "/sbin/restorecon -rv /var/run /usr/share/rubygems/gems/passenger-* /usr/sbin/mcollectived /var/log/mcollective.log /var/run/mcollectived.pid /var/lib/openshift /etc/openshift/node.conf /etc/httpd/conf.d/openshift",
-  }
-
-  file { "sysctl config tweaks":
-    path => "/etc/sysctl.conf",
-    content => template("openshift/node-sysctl.conf.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  exec { "reload sysctl":
-    command => "/sbin/sysctl -p /etc/sysctl.conf",
-    require => File["sysctl config tweaks"],
-  }
-
-  file { "sshd config":
-    path => "/etc/ssh/sshd_config",
-    content => template("openshift/node-sshd_config.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  lokkit::ports { 'openshift' :
-    tcpPorts  => [ '35531-65535' ],
-  }
-
-  service { "openshift-port-proxy":
-    ensure => running,
-    enable => true,
-  }
-
-  service { "openshift-gears":
-    ensure => running,
-    enable => true,
-  }
-
-  file { "openshift node config":
-    path => "/etc/openshift/node.conf",
-    content => template("openshift/node.conf.erb"),
-    ensure => present,
-    require => Package["rubygem-openshift-origin-node"],
-    owner => root, group => root, mode => 0644,
-  }
-
-  exec { "manually initialize openshift facts":
-    command => "/etc/cron.minutely/openshift-facts",
-    require => Package["openshift-origin-msg-node-mcollective"],
-  }
-
-  file { "openshift node pam runuser":
-    path => "/etc/pam.d/node-pam.runuser",
-    content => template("openshift/node-pam.runuser.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "openshift node pam runuser-l":
-    path => "/etc/pam.d/node-pam.runuser-l",
-    content => template("openshift/node-pam.runuser-l.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "openshift node pam sshd":
-    path => "/etc/pam.d/node-pam.sshd",
-    content => template("openshift/node-pam.sshd.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "openshift node pam su":
-    path => "/etc/pam.d/node-pam.su",
-    content => template("openshift/node-pam.su.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
-  file { "openshift node pam system-auth-ac":
-    path => "/etc/pam.d/node-pam.system-auth-ac",
-    content => template("openshift/node-pam.system-auth-ac.erb"),
-    ensure => present,
-    owner => root, group => root, mode => 0644,
-  }
-
 }

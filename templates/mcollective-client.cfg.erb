@@ -2,15 +2,30 @@ topicprefix = /topic/
 main_collective = mcollective
 collectives = mcollective
 libdir = /usr/libexec/mcollective
-logfile = /var/log/mcollective-client.log
 loglevel = debug
+direct_addressing = 1
 
 # Plugins
 securityprovider = psk
 plugin.psk = unset
 
-connector = stomp
-plugin.stomp.host = <%= fqdn %>
-plugin.stomp.port = 61613
-plugin.stomp.user = mcollective
-plugin.stomp.password = <%= password %>
+<% case scope.lookupvar('::openshift_origin::mq_provider') 
+     when 'activemq' %>
+connector = activemq
+plugin.activemq.pool.size = 1
+plugin.activemq.pool.1.host = <%= scope.lookupvar('::openshift_origin::message_q_fqdn') %>
+plugin.activemq.pool.1.port = 61613
+plugin.activemq.pool.1.user = <%= scope.lookupvar('::openshift_origin::mq_server_user') %>
+plugin.activemq.pool.1.password = <%= scope.lookupvar('::openshift_origin::mq_server_password') %>
+<%   when 'stomp' %>
+#connector = stomp
+#plugin.stomp.host = <%= scope.lookupvar('::openshift_origin::message_q_fqdn') %>
+#plugin.stomp.port = 61613
+#plugin.stomp.user = <%= scope.lookupvar('::openshift_origin::mq_server_user') %>
+#plugin.stomp.password = <%= scope.lookupvar('::openshift_origin::mq_server_password') %>
+<%   when 'qpid' %>
+connector = qpid
+plugin.qpid.host=<%= scope.lookupvar('::openshift_origin::message_q_fqdn') %>
+plugin.qpid.secure=false
+plugin.qpid.timeout=5
+<%  end %>

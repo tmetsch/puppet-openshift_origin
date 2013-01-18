@@ -40,10 +40,10 @@ controls {
 
 include "/etc/named.rfc1912.zones";
 
-include "<%= domain %>.key";
+include "<%= scope.lookupvar('::openshift_origin::cloud_domain') %>.key";
 
-zone "<%= domain %>" IN {
+zone "<%= scope.lookupvar('::openshift_origin::cloud_domain') %>" IN {
     type master;
-    file "dynamic/<%= domain %>.db";
-    allow-update { key <%= domain %> ; } ;
+    file "dynamic/<%= scope.lookupvar('::openshift_origin::cloud_domain') %>.db";
+    allow-update { key <%= scope.lookupvar('::openshift_origin::cloud_domain') %> ; } ;
 };

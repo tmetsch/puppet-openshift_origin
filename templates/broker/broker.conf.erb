@@ -1,5 +1,5 @@
 # Domain suffix to use for applications (Must match node config)
-CLOUD_DOMAIN="<%= domain %>"
+CLOUD_DOMAIN="<%= scope.lookupvar('::openshift_origin::cloud_domain') %>"
 # Comma seperted list of valid gear sizes
 VALID_GEAR_SIZES="small,medium"
 
@@ -11,10 +11,10 @@ DEFAULT_GEAR_SIZE="small"
 #Broker datastore configuration
 MONGO_REPLICA_SETS=false
 # Replica set example: "<host-1>:<port-1> <host-2>:<port-2> ..."
-MONGO_HOST_PORT="localhost:27017"
-MONGO_USER="openshift"
-MONGO_PASSWORD="<%= password %>"
-MONGO_DB="openshift_broker_dev"
+MONGO_HOST_PORT="<%= scope.lookupvar('::openshift_origin::mongodb_fqdn') %>:27017"
+MONGO_USER="<%= scope.lookupvar('::openshift_origin::mongo_auth_user') %>"
+MONGO_PASSWORD="<%= scope.lookupvar('::openshift_origin::mongo_auth_password') %>"
+MONGO_DB="<%= scope.lookupvar('::openshift_origin::mongo_db_name') %>"
 
 #Enables gear/filesystem resource usage tracking
 ENABLE_USAGE_TRACKING_DATASTORE="false"
@@ -28,8 +28,8 @@ ENABLE_ANALYTICS="false"
 ENABLE_USER_ACTION_LOG="true"
 USER_ACTION_LOG_FILE="/var/log/openshift/user_action.log"
 
-AUTH_SALT="ClWqe5zKtEW4CJEMyjzQ"
+AUTH_SALT=<%= scope.lookupvar('::openshift_origin::broker_auth_salt') %>
 AUTH_PRIVKEYFILE="/etc/openshift/server_priv.pem"
-AUTH_PRIVKEYPASS=""
+AUTH_PRIVKEYPASS=<%= scope.lookupvar('::openshift_origin::broker_auth_key_password') %>
 AUTH_PUBKEYFILE="/etc/openshift/server_pub.pem"
 AUTH_RSYNC_KEY_FILE="/etc/openshift/rsync_id_rsa"
