@@ -331,7 +331,14 @@ class openshift_origin::node{
   }
 
   if $::openshift_origin::enable_network_services == true {
-    service { 'crond': enable  => true }
+    service { 'crond': 
+      enable  => true,
+      require => Package['cronie']
+    }
+
+    package { 'cronie':
+      ensure => present
+    }
 
     $openshift_init_provider = $::operatingsystem ? {
       'Fedora' => 'systemd',
