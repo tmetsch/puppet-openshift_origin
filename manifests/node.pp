@@ -335,7 +335,8 @@ class openshift_origin::node{
 
     $openshift_init_provider = $::operatingsystem ? {
       'Fedora' => 'systemd',
-      default  => 'redhat'
+      'Centos' => 'systemd',
+      default  => 'redhat',
     }
 
     service { ['openshift-gears', 'openshift-node-web-proxy']:
