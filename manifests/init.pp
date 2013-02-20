@@ -231,6 +231,31 @@ class openshift_origin(
     "Fedora"  => '/usr/bin/chown',
     default   => '/bin/chown',
   }
+
+  $httxt2dbm = $::operatingsystem  ? {
+    "Fedora"  => '/usr/bin/httxt2dbm',
+    default   => '/usr/sbin/httxt2dbm',
+  }
+
+  $chmod = $::operatingsystem  ? {
+    "Fedora"  => '/usr/bin/chmod',
+    default   => '/bin/chmod',
+  }
+
+  $grep = $::operatingsystem  ? {
+    "Fedora"  => '/usr/bin/grep',
+    default   => '/bin/grep',
+  }
+
+  $cat = $::operatingsystem  ? {
+    "Fedora"  => '/usr/bin/cat',
+    default   => '/bin/cat',
+  }
+
+  $mv = $::operatingsystem  ? {
+    "Fedora"  => '/usr/bin/mv',
+    default   => '/bin/mv',
+  }
   
   $echo = $::operatingsystem  ? {
     "Fedora"  => '/usr/bin/echo',

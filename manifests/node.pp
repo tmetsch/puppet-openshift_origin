@@ -389,6 +389,29 @@ class openshift_origin::node{
     }
   }
 
+  if ($::openshift_origin::configure_broker == true and $::openshift_origin::configure_node == true) {
+    file { 'broker and console route for node':
+      ensure   => present,
+      path     => '/tmp/nodes.broker_routes.txt',
+      content  => template('openshift_origin/node/node_routes.txt.erb'),
+      owner    => 'root',
+      group    => 'apache',
+      mode     => '0640',
+      require  => Package['rubygem-openshift-origin-node'],
+    }
+
+    exec { 'regen node routes':
+      command     => "$::openshift_origin::cat /etc/httpd/conf.d/openshift/nodes.txt /tmp/nodes.broker_routes.txt > /etc/httpd/conf.d/openshift/nodes.txt.new && \
+                      $::openshift_origin::mv /etc/httpd/conf.d/openshift/nodes.txt.new /etc/httpd/conf.d/openshift/nodes.txt && \
+                      $::openshift_origin::httxt2dbm -f DB -i /etc/httpd/conf.d/openshift/nodes.txt -o /etc/httpd/conf.d/openshift/nodes.db.new && \
+                      $::openshift_origin::chown root:apache /etc/httpd/conf.d/openshift/nodes.txt /etc/httpd/conf.d/openshift/nodes.db.new && \
+                      $::openshift_origin::chmod 750 /etc/httpd/conf.d/openshift/nodes.txt /etc/httpd/conf.d/openshift/nodes.db.new && \
+                      $::openshift_origin::mv -f /etc/httpd/conf.d/openshift/nodes.db.new /etc/httpd/conf.d/openshift/nodes.db",
+      unless      => "$::openshift_origin::grep '__default__/broker' /etc/httpd/conf.d/openshift/nodes.txt 2>/dev/null",
+      require     => File['broker and console route for node'],
+    }
+  }
+
   package {
     [
       'openshift-origin-cartridge-abstract',
