@@ -6,158 +6,80 @@
 # === Parameters:
 #
 # [*create_origin_yum_repos*]
-#
-# True if OpenShift Origin dependencies and OpenShift Origin nightly yum repositories should be created on this node.
-#
+#   True if OpenShift Origin dependencies and OpenShift Origin nightly yum repositories should be created on this node.
 # [*install_client_tools*]
-#
-# True if OpenShift Client tools be installed on this node.
-#
+#   True if OpenShift Client tools be installed on this node.
 # [*enable_network_services*]
-#
-# True if all support services be enabled. False if they are enabled by other classes in your recipe.
-#
+#   True if all support services be enabled. False if they are enabled by other classes in your recipe.
 # [*configure_firewall*]
-#
-# True if firewall should be configured for this node (Will blow away any existing configuration)
-#
+#   True if firewall should be configured for this node (Will blow away any existing configuration)
 # [*configure_ntp*]
-#
-# True if NTP should be configured on this node. False if ntp is configured by other classes in your recipe.
-#
+#   True if NTP should be configured on this node. False if ntp is configured by other classes in your recipe.
 # [*configure_activemq*]
-#
-# True if ActiveMQ should be installed and configured on this node (Used by m-collective)
-#
+#   True if ActiveMQ should be installed and configured on this node (Used by m-collective)
 # [*configure_qpid*]
-#
-# True if Qpid message broker should be installed and configured on this node. (Optionally, used by m-collective. Replaced ActiveMQ)
-#
+#   True if Qpid message broker should be installed and configured on this node. (Optionally, used by m-collective. Replaced ActiveMQ)
 # [*configure_mongodb*]
-#
-# True if Mongo DB should be installed and configured on this node.
-#
+#   True if Mongo DB should be installed and configured on this node.
 # [*configure_named*]
-#
-# True if a Bind server should be configured and run on this node.
-#
+#   True if a Bind server should be configured and run on this node.
 # [*configure_broker*]
-#
-# True if an OpenShift Origin broker should be installed and configured on this node.
-#
+#   True if an OpenShift Origin broker should be installed and configured on this node.
 # [*configure_node*]
-#
-# True if an OpenShift Origin node should be installed and configured on this node.
-#
+#   True if an OpenShift Origin node should be installed and configured on this node.
 # [*named_ipaddress*]
-#
-# IP Address of DNS Bind server (If running on a different node)
-#
+#   IP Address of DNS Bind server (If running on a different node)
 # [*mongodb_fqdn*]
-#
-# FQDN of node running the MongoDB server (If running on a different node)
-#
+#   FQDN of node running the MongoDB server (If running on a different node)
 # [*mq_fqdn*]
-#
-# FQDN of node running the message queue (ActiveMQ or Qpid) server (If running on a different node)
-#
+#   FQDN of node running the message queue (ActiveMQ or Qpid) server (If running on a different node)
 # [*broker_fqdn*]
-#
-# FQDN of node running the OpenShift OpenShift broker server (If running on a different node)
-#
+#   FQDN of node running the OpenShift OpenShift broker server (If running on a different node)
 # [*cloud_domain*]
-#
-# DNS suffix for applications running on this PaaS.
-# Eg. cloud.example.com
-#   Applications will be <app>-<namespace>.cloud.example.com
-#
+#   DNS suffix for applications running on this PaaS.
+#   Eg. cloud.example.com
+#   Applications will be <code><app>-<namespace>.cloud.example.com</code>
 # [*configure_fs_quotas*]
-#
-# Enables quotas on the local node. Applicable only to OpenShift OpenShift Nodes.
-# If this setting is set to false, it is expected that Quotas are configured elsewhere in the
-# Puppet recipe
-#
+#   Enables quotas on the local node. Applicable only to OpenShift OpenShift Nodes.
+#   If this setting is set to false, it is expected that Quotas are configured elsewhere in the
+#   Puppet catalog
 # [*oo_device*]
-#
-# Device on which gears are stored (/var/lib/openshift)
-#
+#   Device on which gears are stored (/var/lib/openshift)
 # [*oo_mount*]
-#
-# Base mount point for /var/lib/openshift directory
-#
+#   Base mount point for /var/lib/openshift directory
 # [*configure_cgroups*]
-#
-# Enables cgoups on the local node. Applicable only to OpenShift OpenShift Nodes.
-# If this setting is set to false, it is expected that cgroups are configured elsewhere in the
-# Puppet recipe
-#
+#   Enables cgoups on the local node. Applicable only to OpenShift OpenShift Nodes. If this setting is set to false, it is expected that cgroups are configured elsewhere in the Puppet catalog
 # [*configure_pam*]
-#
-# Updates PAM settings on the local node to secure gear logins. Applicable only to
-# OpenShift OpenShift Nodes. If this setting is set to false, it is expected that
-# cgroups are configured elsewhere in the Puppet recipe
-#
+#   Updates PAM settings on the local node to secure gear logins. Applicable only to OpenShift OpenShift Nodes. If this setting is set to false, it is expected that cgroups are configured elsewhere in the Puppet catalog
 # [*broker_auth_plugin*]
-#
-# The authentication plugin to use with the OpenShift OpenShift Broker. Supported
-# values are 'mongo' and 'basic-auth'
-#
+#   The authentication plugin to use with the OpenShift OpenShift Broker. Supported values are 'mongo' and 'basic-auth'
 # [*broker_auth_pub_key*]
-#
-# Public key used to authenticate communication between node and broker. If left blank,
-# this file is auto generated.
-#
+#   Public key used to authenticate communication between node and broker. If left blank, this file is auto generated.
 # [*broker_auth_priv_key*]
-#
-# Private key used to authenticate communication between node and broker. If
-# `broker_auth_pub_key` is left blank, this file is auto generated.
-#
+#   Private key used to authenticate communication between node and broker. If broker_auth_pub_key` is left blank, this file is auto generated.
 # [*broker_auth_key_password*]
-#
-# Password for `broker_auth_priv_key` private key
-#
+#   Password for `broker_auth_priv_key` private key
 # [*broker_auth_salt*]
-#
-# Salt used to generate authentication tokens for communication between node and broker.
-#
+#   Salt used to generate authentication tokens for communication between node and broker.
 # [*broker_rsync_key*]
-#
-# TODO
-#
+#   TODO
 # [*mq_provider*]
-#
-# Message queue plugin to configure for mcollecitve. Defaults to 'activemq'
-# Acceptable values are 'activemq', 'stomp' and 'qpid'
-#
+#   Message queue plugin to configure for mcollecitve. Defaults to <code>'activemq'</code> Acceptable values are <code>'activemq'</code>, <code>'stomp'</code> and <code>'qpid'</code>
 # [*mq_server_user*]
-#
-# User to authenticate against message queue server
-#
+#   User to authenticate against message queue server
 # [*mq_server_password*]
-#
-# Password to authenticate against message queue server
-#
+#   Password to authenticate against message queue server
 # [*mongo_auth_user*]
-#
-# User to authenticate against Mongo DB server
-#
+#   User to authenticate against Mongo DB server
 # [*mongo_auth_password*]
-#
-# Password to authenticate against Mongo DB server
-#
+#   Password to authenticate against Mongo DB server
 # [*mongo_db_name*]
-#
-# name of the MongoDB database
-#
+#   name of the MongoDB database
 # [*named_tsig_priv_key*]
-#
-# TSIG signature to authenticate against the Bind DNS server.
-#
+#   TSIG signature to authenticate against the Bind DNS server.
 # [*update_network_dns_servers*]
+#   True if Bind DNS server specified in `named_ipaddress` should be added as first DNS server for application name resolution.
 #
-# True if Bind DNS server specified in `named_ipaddress` should be added as first DNS server
-# for application name resolution.
-
 class openshift_origin(
   $node_fqdn                  = "${hostname}.${domain}",
   $create_origin_yum_repos    = true,
@@ -211,22 +133,22 @@ class openshift_origin(
   if $::facterversion == '1.6.16' {
     fail 'Factor version needs to be updated to atleast 1.6.17'
   }
-  
+
   $service = $::operatingsystem  ? {
     "Fedora"  => '/usr/sbin/service',
     default   => '/sbin/service',
   }
-  
+
   $rm = $::operatingsystem  ? {
     "Fedora"  => '/usr/bin/rm',
     default   => '/bin/rm',
   }
-  
+
   $touch = $::operatingsystem  ? {
     "Fedora"  => '/usr/bin/touch',
     default   => '/bin/touch',
   }
-  
+
   $chown = $::operatingsystem  ? {
     "Fedora"  => '/usr/bin/chown',
     default   => '/bin/chown',
@@ -256,7 +178,7 @@ class openshift_origin(
     "Fedora"  => '/usr/bin/mv',
     default   => '/bin/mv',
   }
-  
+
   $echo = $::operatingsystem  ? {
     "Fedora"  => '/usr/bin/echo',
     default   => '/bin/echo',
@@ -390,13 +312,13 @@ class openshift_origin(
       mode    => '0644',
       require => Package['rhc']
     }
-    
+
     if $::operatingsystem == "Redhat" {
       #Support gems and packages to allow rhc tools to run within SCL environment
       ensure_resource( 'package', 'ruby193-rubygem-net-ssh' , { ensure => present })
       ensure_resource( 'package', 'ruby193-rubygem-archive-tar-minitar' , { ensure => present })
       ensure_resource( 'package', 'ruby193-rubygem-commander' , { ensure => present })
-          
+
       exec { 'gems to enable rhc in scl-193':
         command => '/usr/bin/scl enable ruby193 "gem install rspec --version 1.3.0 --no-rdoc --no-ri" ; \
           /usr/bin/scl enable ruby193 "gem install fakefs --no-rdoc --no-ri" ; \
@@ -410,12 +332,12 @@ class openshift_origin(
       "true"  => "firewalld",
       default => "system-config-firewall-base",
     }
-    
+
     ensure_resource( 'package', $firewall_package , {
       ensure => present,
       alias  => 'firewall-package',
     })
-    
+
     exec { 'Open port for SSH':
       command => $use_firewalld ? {
         "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-service=ssh",
@@ -448,7 +370,7 @@ class openshift_origin(
       ]
     }
   }
-  
+
   if $::operatingsystem == "Redhat" {
     if ! defined(File['/etc/profile.d/scl193.sh']) {
       file { '/etc/profile.d/scl193.sh':
