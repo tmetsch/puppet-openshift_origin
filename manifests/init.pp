@@ -369,27 +369,24 @@ class openshift_origin (
     }
     )
 
+    # Set the base firewall command for enableling services
+    $firewall_cmd = $::use_firewalld ? {
+      true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=',
+      default => '/usr/sbin/lokkit --service=',
+    }
+
     exec { 'Open port for SSH':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=ssh',
-        default => '/usr/sbin/lokkit --service=ssh',
-      },
+      command => "${firewall_cmd}ssh",
       require => Package['firewall-package'],
     }
 
     exec { 'Open port for HTTP':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=http',
-        default => '/usr/sbin/lokkit --service=http',
-      },
+      command => "${firewall_cmd}http",
       require => Package['firewall-package'],
     }
 
     exec { 'Open port for HTTPS':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=https',
-        default => '/usr/sbin/lokkit --service=https',
-      },
+      command => "${firewall_cmd}https",
       require => Package['firewall-package'],
     }
   }
