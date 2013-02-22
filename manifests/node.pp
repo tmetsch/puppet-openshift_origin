@@ -1,4 +1,37 @@
-class openshift_origin::node{
+# == Class: openshift_origin::node
+#
+# Manage an OpenShift Origin node.
+#
+# === Parameters
+#
+# None
+#
+# === Examples
+#
+#  include openshift_origin::node
+#
+# === Copyright
+#
+# Copyright 2013 Mojo Lingo LLC.
+# Copyright 2013 Red Hat, Inc.
+#
+# === License
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+class openshift_origin::node (
+  $example = undef
+) {
   ensure_resource( 'package', 'rubygem-openshift-origin-node',
     {
       ensure  => present,
@@ -144,7 +177,7 @@ class openshift_origin::node{
       require => Package['mcollective'],
     }
   }
-  
+
   if $::operatingsystem == "Redhat" {
     if ! defined(File['mcollective env']) {
       file { 'mcollective env':
@@ -265,7 +298,7 @@ class openshift_origin::node{
       mode       => '0644',
       require => Package['pam_openshift'],
     }
-    
+
     $os_all_unmanaged_users = [['root','adm','apache'], $::openshift_origin::os_unmanaged_users]
     file { 'openshift node pam-namespace sandbox.conf':
       ensure     => present,
@@ -276,7 +309,7 @@ class openshift_origin::node{
       mode       => '0644',
       require => Package['pam_openshift'],
     }
-    
+
     file { 'openshift node pam-namespace tmp.conf':
       ensure     => present,
       path       => '/etc/security/namespace.d/tmp.conf',
@@ -286,7 +319,7 @@ class openshift_origin::node{
       mode       => '0644',
       require => Package['pam_openshift'],
     }
-    
+
     file { 'openshift node pam-namespace vartmp.conf':
       ensure     => present,
       path       => '/etc/security/namespace.d/vartmp.conf',
@@ -319,7 +352,7 @@ class openshift_origin::node{
   }
 
   if $::openshift_origin::enable_network_services == true {
-    service { 'crond': 
+    service { 'crond':
       enable  => true,
       require => Package['cronie']
     }
@@ -435,9 +468,9 @@ class openshift_origin::node{
         [
           'openshift-origin-cartridge-postgresql-9.2',
           'openshift-origin-cartridge-ruby-1.9',
-	  'openshift-origin-cartridge-php-5.4',
-	  'openshift-origin-cartridge-perl-5.16',
-	  'openshift-origin-cartridge-phpmyadmin-3.5',
+    'openshift-origin-cartridge-php-5.4',
+    'openshift-origin-cartridge-perl-5.16',
+    'openshift-origin-cartridge-phpmyadmin-3.5',
         ]:
         ensure  => present,
         require => [
@@ -451,10 +484,10 @@ class openshift_origin::node{
         [
           'openshift-origin-cartridge-postgresql-8.4',
           'openshift-origin-cartridge-ruby-1.9-scl',
-	  'openshift-origin-cartridge-php-5.3',
-	  'openshift-origin-cartridge-perl-5.10',
-	  'openshift-origin-cartridge-python-2.6',
-	  'openshift-origin-cartridge-phpmyadmin-3.4',
+    'openshift-origin-cartridge-php-5.3',
+    'openshift-origin-cartridge-perl-5.10',
+    'openshift-origin-cartridge-python-2.6',
+    'openshift-origin-cartridge-phpmyadmin-3.4',
         ]:
         ensure  => present,
         require => [
