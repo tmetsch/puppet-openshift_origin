@@ -116,15 +116,15 @@ class openshift_origin::node (
   if $::openshift_origin::configure_firewall == true {
     exec { 'Open HTTP port for Node-webproxy':
       command => $::use_firewalld ? {
-        "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=8000/tcp",
-        default => "/usr/sbin/lokkit --port=8000:tcp",
+        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8000/tcp',
+        default => '/usr/sbin/lokkit --port=8000:tcp',
       },
       require => Package['firewall-package']
     }
     exec { 'Open HTTPS port for Node-webproxy':
       command => $::use_firewalld ? {
-        "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=8443/tcp",
-        default => "/usr/sbin/lokkit --port=8443:tcp",
+        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8443/tcp',
+        default => '/usr/sbin/lokkit --port=8443:tcp',
       },
       require => Package['firewall-package']
     }
@@ -178,7 +178,7 @@ class openshift_origin::node (
     }
   }
 
-  if $::operatingsystem == "Redhat" {
+  if $::operatingsystem == 'Redhat' {
     if ! defined(File['mcollective env']) {
       file { 'mcollective env':
         ensure  => present,
@@ -194,7 +194,7 @@ class openshift_origin::node (
 
   if $::openshift_origin::configure_fs_quotas == true {
     exec { 'Initialize quota DB':
-      command => "/usr/sbin/oo-init-quota",
+      command => '/usr/sbin/oo-init-quota',
       creates => "${::gear_root_mount}/aquota.user",
       require => Package['openshift-origin-node-util'],
     }

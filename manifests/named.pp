@@ -108,15 +108,15 @@ class openshift_origin::named (
   if $::openshift_origin::configure_firewall == true {
     exec { 'Open TCP port for BIND':
       command => $::use_firewalld ? {
-        "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/tcp",
-        default => "/usr/sbin/lokkit --port=53:tcp",
+        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/tcp',
+        default => '/usr/sbin/lokkit --port=53:tcp',
       },
       require => Package['firewall-package']
     }
     exec { 'Open UDP port for BIND':
       command => $::use_firewalld ? {
-        "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/udp",
-        default => "/usr/sbin/lokkit --port=53:udp",
+        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/udp',
+        default => '/usr/sbin/lokkit --port=53:udp',
       },
       require => Package['firewall-package']
     }

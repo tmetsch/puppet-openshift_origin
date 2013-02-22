@@ -94,7 +94,7 @@ class openshift_origin::broker (
     require => Yumrepo[openshift-origin-deps]
   })
 
-  if $::operatingsystem == "Fedora" {
+  if $::operatingsystem == 'Fedora' {
     ensure_resource( 'package', 'actionmailer', {
       ensure   => '3.2.11',
       provider => 'gem',
@@ -399,7 +399,7 @@ class openshift_origin::broker (
     })
   }
 
-  if $::operatingsystem == "RedHat" {
+  if $::operatingsystem == 'RedHat' {
     ensure_resource( 'package', 'ruby193-rubygem-actionmailer', {
       ensure   => 'latest',
       alias    => 'actionmailer',
@@ -744,7 +744,7 @@ class openshift_origin::broker (
     }
   }
 
-  if $::operatingsystem == "Redhat" {
+  if $::operatingsystem == 'Redhat' {
     if ! defined(File['mcollective env']) {
       file { 'mcollective env':
         ensure  => present,
@@ -894,7 +894,7 @@ class openshift_origin::broker (
   }
 
   $broker_bundle_show = $::operatingsystem  ? {
-    "Fedora"  => '/usr/bin/bundle show',
+    'Fedora'  => '/usr/bin/bundle show',
     default   => '/usr/bin/scl enable ruby193 "bundle show"',
   }
 
@@ -904,7 +904,7 @@ class openshift_origin::broker (
     ${broker_bundle_show} && \
     ${::openshift_origin::chown} apache:apache Gemfile.lock && \
     ${::openshift_origin::rm} -rf tmp/cache/*",
-    unless      => "/usr/bin/bundle show",
+    unless      => '/usr/bin/bundle show',
     require     => [
       Package['openshift-origin-broker'],
       Package['rubygem-openshift-origin-controller'],

@@ -57,7 +57,7 @@ class openshift_origin::console (
   }
 
   $console_bundle_show = $::operatingsystem  ? {
-    "Fedora"  => '/usr/bin/bundle install',
+    'Fedora'  => '/usr/bin/bundle install',
     default   => '/usr/bin/scl enable ruby193 "bundle show"',
   }
 

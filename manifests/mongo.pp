@@ -101,8 +101,8 @@ class openshift_origin::mongo (
   if $::openshift_origin::configure_firewall == true {
     exec { 'Open port for MongoDB':
       command => $::use_firewalld ? {
-        "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=27017/tcp",
-        default => "/usr/sbin/lokkit --port=27017:tcp",
+        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=27017/tcp',
+        default => '/usr/sbin/lokkit --port=27017:tcp',
       },
       require => [Package['mongodb'],Package['mongodb-server'],Package['firewall-package']],
     }
