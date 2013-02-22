@@ -1,6 +1,6 @@
 # == Class: openshift_origin
 #
-# This is the main class to manage all the components of a OpenShift OpenShift
+# This is the main class to manage all the components of a OpenShift Origin
 # infrastructure. This is the only class that needs to be declared.
 #
 # === Parameters:
@@ -107,8 +107,8 @@ class openshift_origin (
   $cloud_domain               = 'example.com',
   $dns_servers                = ['8.8.8.8', '8.8.4.4'],
   $configure_fs_quotas        = true,
-  $oo_device                  = $gear_root_device,
-  $oo_mount                   = $gear_root_mount,
+  $oo_device                  = $::gear_root_device,
+  $oo_mount                   = $::gear_root_mount,
   $configure_cgroups          = true,
   $configure_pam              = true,
   $broker_auth_plugin         = 'mongo',
@@ -358,7 +358,7 @@ class openshift_origin (
   }
 
   if $configure_firewall == true {
-    $firewall_package = $use_firewalld ? {
+    $firewall_package = $::use_firewalld ? {
       true    => 'firewalld',
       default => 'system-config-firewall-base',
     }
@@ -370,7 +370,7 @@ class openshift_origin (
     )
 
     exec { 'Open port for SSH':
-      command => $use_firewalld ? {
+      command => $::use_firewalld ? {
         true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=ssh',
         default => '/usr/sbin/lokkit --service=ssh',
       },
@@ -378,7 +378,7 @@ class openshift_origin (
     }
 
     exec { 'Open port for HTTP':
-      command => $use_firewalld ? {
+      command => $::use_firewalld ? {
         true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=http',
         default => '/usr/sbin/lokkit --service=http',
       },
@@ -386,7 +386,7 @@ class openshift_origin (
     }
 
     exec { 'Open port for HTTPS':
-      command => $use_firewalld ? {
+      command => $::use_firewalld ? {
         true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=https',
         default => '/usr/sbin/lokkit --service=https',
       },
