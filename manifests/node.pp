@@ -116,14 +116,14 @@ class openshift_origin::node (
   if $::openshift_origin::configure_firewall == true {
     exec { 'Open HTTP port for Node-webproxy':
       command => $::use_firewalld ? {
-        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8000/tcp',
+        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8000/tcp',
         default => '/usr/sbin/lokkit --port=8000:tcp',
       },
       require => Package['firewall-package']
     }
     exec { 'Open HTTPS port for Node-webproxy':
       command => $::use_firewalld ? {
-        "true"    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8443/tcp',
+        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8443/tcp',
         default => '/usr/sbin/lokkit --port=8443:tcp',
       },
       require => Package['firewall-package']
