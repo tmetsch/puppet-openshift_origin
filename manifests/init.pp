@@ -86,7 +86,7 @@
 #   resolution.
 #
 class openshift_origin (
-  $node_fqdn                  = "${hostname}.${domain}",
+  $node_fqdn                  = $::fqdn,
   $create_origin_yum_repos    = true,
   $install_client_tools       = true,
   $enable_network_services    = true,
@@ -101,9 +101,9 @@ class openshift_origin (
   $configure_node             = true,
   $install_repo               = 'nightlies',
   $named_ipaddress            = $ipaddress,
-  $mongodb_fqdn               = $node_fqdn,
-  $mq_fqdn                    = $node_fqdn,
-  $broker_fqdn                = $node_fqdn,
+  $mongodb_fqdn               = $::fqdn,
+  $mq_fqdn                    = $::fqdn,
+  $broker_fqdn                = $::fqdn,
   $cloud_domain               = 'example.com',
   $dns_servers                = ['8.8.8.8', '8.8.4.4'],
   $configure_fs_quotas        = true,
