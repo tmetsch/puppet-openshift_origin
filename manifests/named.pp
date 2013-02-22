@@ -33,8 +33,8 @@ class openshift_origin::named (
   $example = undef
 ) {
   if $::openshift_origin::named_tsig_priv_key == '' {
-    warning "Generate the Key file with '/usr/sbin/dnssec-keygen -a HMAC-MD5 -b 512 -n USER -r /dev/urandom -K /var/named ${cloud_domain}'"
-    warning "Use the last field in the generated key file /var/named/K${cloud_domain}*.key"
+    warning "Generate the Key file with '/usr/sbin/dnssec-keygen -a HMAC-MD5 -b 512 -n USER -r /dev/urandom -K /var/named ${openshift_origin::cloud_domain}'"
+    warning "Use the last field in the generated key file /var/named/K${openshift_origin::cloud_domain}*.key"
     fail 'named_tsig_priv_key is required.'
   }
 
@@ -43,7 +43,7 @@ class openshift_origin::named (
   }
 
   file { 'dynamic zone':
-    path    => "/var/named/dynamic/${::openshift_origin::cloud_domain}.db",
+    path    => "/var/named/dynamic/${openshift_origin::cloud_domain}.db",
     content => template('openshift_origin/named/dynamic-zone.db.erb'),
     owner   => 'named',
     group   => 'named',
@@ -88,7 +88,7 @@ class openshift_origin::named (
   }
 
   file { 'named key':
-    path    => "/var/named/${::openshift_origin::cloud_domain}.key",
+    path    => "/var/named/${openshift_origin::cloud_domain}.key",
     content => template('openshift_origin/named/named.key.erb'),
     owner   => 'named',
     group   => 'named',
@@ -107,14 +107,14 @@ class openshift_origin::named (
 
   if $::openshift_origin::configure_firewall == true {
     exec { 'Open TCP port for BIND':
-      command => $use_firewalld ? {
+      command => $::use_firewalld ? {
         "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/tcp",
         default => "/usr/sbin/lokkit --port=53:tcp",
       },
       require => Package['firewall-package']
     }
     exec { 'Open UDP port for BIND':
-      command => $use_firewalld ? {
+      command => $::use_firewalld ? {
         "true"    => "/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/udp",
         default => "/usr/sbin/lokkit --port=53:udp",
       },
