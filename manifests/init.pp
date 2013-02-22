@@ -119,7 +119,7 @@ class openshift_origin (
   $configure_console          = true,
   $configure_node             = true,
   $install_repo               = 'nightlies',
-  $named_ipaddress            = $ipaddress,
+  $named_ipaddress            = $::ipaddress,
   $mongodb_fqdn               = $::fqdn,
   $mq_fqdn                    = $::fqdn,
   $broker_fqdn                = $::fqdn,
@@ -147,8 +147,9 @@ class openshift_origin (
   $update_network_dns_servers = true,
   $development_mode           = false
 ) {
+  include openshift_origin::params
   if $::facterversion == '1.6.16' {
-    fail 'Factor version needs to be updated to atleast 1.6.17'
+    fail 'Factor version needs to be updated to at least 1.6.17'
   }
 
   $service   = $::operatingsystem ? {
@@ -377,35 +378,25 @@ class openshift_origin (
   }
 
   if $configure_firewall == true {
-    $firewall_package = $::use_firewalld ? {
-      true    => 'firewalld',
-      default => 'system-config-firewall-base',
-    }
 
-    ensure_resource('package', $firewall_package, {
+    ensure_resource('package', $openshift_origin::params::firewall_package, {
       ensure => present,
       alias  => 'firewall-package',
     }
     )
 
-    # Set the base firewall command for enableling services
-    $firewall_cmd = $::use_firewalld ? {
-      true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-service=',
-      default => '/usr/sbin/lokkit --service=',
-    }
-
     exec { 'Open port for SSH':
-      command => "${firewall_cmd}ssh",
+      command => "${openshift_origin::params::firewall_service_cmd}ssh",
       require => Package['firewall-package'],
     }
 
     exec { 'Open port for HTTP':
-      command => "${firewall_cmd}http",
+      command => "${openshift_origin::params::firewall_service_cmd}http",
       require => Package['firewall-package'],
     }
 
     exec { 'Open port for HTTPS':
-      command => "${firewall_cmd}https",
+      command => "${openshift_origin::params::firewall_service_cmd}https",
       require => Package['firewall-package'],
     }
   }
@@ -413,7 +404,7 @@ class openshift_origin (
   if $update_network_dns_servers == true {
     augeas { 'network setup':
       context => '/files/etc/sysconfig/network-scripts/ifcfg-eth0',
-      changes => ["set DNS1 ${ipaddress}", "set HWADDR ${macaddress_eth0}",],
+      changes => ["set DNS1 ${::ipaddress}", "set HWADDR ${::macaddress_eth0}"],
     }
   }
 

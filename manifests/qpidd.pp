@@ -29,9 +29,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::qpidd (
-  $example = undef
-) {
+class openshift_origin::qpidd {
+  include openshift_origin::params
   ensure_resource( 'package', 'qpid-cpp-server', { ensure  => present } )
   ensure_resource( 'package', 'mcollective-qpid-plugin', { ensure  => present } )
 
@@ -51,11 +50,12 @@ class openshift_origin::qpidd (
   }
 
   if $::openshift_origin::configure_firewall == true {
+    $qpid_port = $::use_firewalld ? {
+      true    => '5672/tcp',
+      default => '5672:tcp',
+    }
     exec { 'Open port for Qpid':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=5672/tcp',
-        default => '/usr/sbin/lokkit --port=5672:tcp',
-      },
+      command => "${openshift_origin::params::firewall_port_cmd}${qpid_port}",
       require => Package['firewall-package']
     }
   }

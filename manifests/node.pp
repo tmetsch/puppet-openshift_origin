@@ -29,9 +29,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::node (
-  $example = undef
-) {
+class openshift_origin::node {
+  include openshift_origin::params
   ensure_resource( 'package', 'rubygem-openshift-origin-node',
     {
       ensure  => present,
@@ -114,18 +113,23 @@ class openshift_origin::node (
   ensure_resource( 'package', 'cronie', { ensure => present } )
 
   if $::openshift_origin::configure_firewall == true {
+    $webproxy_http_port = $::use_firewalld ? {
+      true    => '8000/tcp',
+      default => '8000:tcp',
+    }
+
     exec { 'Open HTTP port for Node-webproxy':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8000/tcp',
-        default => '/usr/sbin/lokkit --port=8000:tcp',
-      },
+      command => "${openshift_origin::params::firewall_port_cmd}${webproxy_http_port}",
       require => Package['firewall-package']
     }
+
+    $webproxy_https_port = $::use_firewalld ? {
+      true    => '8443/tcp',
+      default => '8443:tcp',
+    }
+
     exec { 'Open HTTPS port for Node-webproxy':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=8443/tcp',
-        default => '/usr/sbin/lokkit --port=8443:tcp',
-      },
+      command => "${openshift_origin::params::firewall_port_cmd}${webproxy_https_port}",
       require => Package['firewall-package']
     }
   }else{

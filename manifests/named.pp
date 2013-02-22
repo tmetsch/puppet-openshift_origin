@@ -29,9 +29,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::named (
-  $example = undef
-) {
+class openshift_origin::named {
+  include openshift_origin::params
   if $::openshift_origin::named_tsig_priv_key == '' {
     warning "Generate the Key file with '/usr/sbin/dnssec-keygen -a HMAC-MD5 -b 512 -n USER -r /dev/urandom -K /var/named ${openshift_origin::cloud_domain}'"
     warning "Use the last field in the generated key file /var/named/K${openshift_origin::cloud_domain}*.key"
@@ -105,19 +104,9 @@ class openshift_origin::named (
     require => Package['bind']
   }
 
-  if $::openshift_origin::configure_firewall == true {
-    exec { 'Open TCP port for BIND':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/tcp',
-        default => '/usr/sbin/lokkit --port=53:tcp',
-      },
-      require => Package['firewall-package']
-    }
-    exec { 'Open UDP port for BIND':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=53/udp',
-        default => '/usr/sbin/lokkit --port=53:udp',
-      },
+  if $openshift_origin::configure_firewall == true {
+    exec { 'Open port for BIND':
+      command => "${openshift_origin::params::firewall_service_cmd}dns",
       require => Package['firewall-package']
     }
   }

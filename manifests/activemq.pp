@@ -29,9 +29,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::activemq (
-  $example = undef
-) {
+class openshift_origin::activemq {
+  include openshift_origin::params
   ensure_resource( 'package', 'activemq', {
       ensure  => latest,
       require => Yumrepo[openshift-origin-deps],
@@ -109,11 +108,13 @@ class openshift_origin::activemq (
   }
 
   if $::openshift_origin::configure_firewall == true {
+    $activemq_port = $::use_firewalld ? {
+      true    => '61613/tcp',
+      default => '61613:tcp',
+    }
+
     exec { 'Open port for ActiveMQ':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=61613/tcp',
-        default => '/usr/sbin/lokkit --port=61613:tcp',
-      },
+      command => "${openshift_origin::params::firewall_port_cmd}${activemq_port}",
       require => Package['firewall-package']
     }
   }

@@ -29,9 +29,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::mongo (
-  $example = undef
-) {
+class openshift_origin::mongo {
+  include openshift_origin::params
   ensure_resource( 'package', 'mongodb', { ensure  => present, require => Yumrepo['openshift-origin-deps'], })
   ensure_resource( 'package', 'mongodb-server', { ensure  => present, require => Yumrepo['openshift-origin-deps'], })
 
@@ -99,11 +98,12 @@ class openshift_origin::mongo (
   }
 
   if $::openshift_origin::configure_firewall == true {
+    $mongo_port = $::use_firewalld ? {
+      true    => '27017/tcp',
+      default => '27017:tcp',
+    }
     exec { 'Open port for MongoDB':
-      command => $::use_firewalld ? {
-        true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=27017/tcp',
-        default => '/usr/sbin/lokkit --port=27017:tcp',
-      },
+      command => "${openshift_origin::params::firewall_port_cmd}${mongo_port}",
       require => [Package['mongodb'],Package['mongodb-server'],Package['firewall-package']],
     }
   }
