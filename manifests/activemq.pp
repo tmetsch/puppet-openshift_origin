@@ -31,14 +31,13 @@
 #
 class openshift_origin::activemq {
   include openshift_origin::params
-  ensure_resource( 'package', 'activemq', {
+  ensure_resource('package', 'activemq', {
       ensure  => latest,
       require => Yumrepo[openshift-origin-deps],
     }
   )
 
-  ensure_resource( 'package', 'activemq-client',
-    {
+  ensure_resource('package', 'activemq-client', {
       ensure  => present,
       require => Yumrepo[openshift-origin-deps],
     }
@@ -55,12 +54,11 @@ class openshift_origin::activemq {
         require => Package['activemq'],
       }
     }
-    default : {
-    }
+    default  : {}
   }
 
   file { '/var/run/activemq/':
-    ensure => 'directory',
+    ensure  => 'directory',
     owner   => 'activemq',
     group   => 'activemq',
     mode    => '0750',
@@ -95,16 +93,17 @@ class openshift_origin::activemq {
   }
 
   if $::openshift_origin::enable_network_services == true {
-    ensure_resource( 'service', 'activemq', {
-      require    => [
-        File['activemq.xml config'],
-        File['jetty.xml config'],
-        File['jetty-realm.properties config'],
-      ],
-      hasstatus  => true,
-      hasrestart => true,
-      enable     => true,
-    })
+    ensure_resource('service', 'activemq', {
+        require    => [
+          File['activemq.xml config'],
+          File['jetty.xml config'],
+          File['jetty-realm.properties config'],
+        ],
+        hasstatus  => true,
+        hasrestart => true,
+        enable     => true,
+      }
+    )
   }
 
   if $::openshift_origin::configure_firewall == true {

@@ -148,6 +148,7 @@ class openshift_origin (
   $development_mode           = false
 ) {
   include openshift_origin::params
+
   if $::facterversion == '1.6.16' {
     fail 'Factor version needs to be updated to at least 1.6.17'
   }
@@ -378,7 +379,6 @@ class openshift_origin (
   }
 
   if $configure_firewall == true {
-
     ensure_resource('package', $openshift_origin::params::firewall_package, {
       ensure => present,
       alias  => 'firewall-package',

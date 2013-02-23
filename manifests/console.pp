@@ -29,18 +29,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class openshift_origin::console (
-  $example = undef
-) {
-  ensure_resource( 'package', 'rubygem-openshift-origin-console', {
-    ensure  => present,
-    require => Yumrepo[openshift-origin]
-  })
+class openshift_origin::console {
+  ensure_resource('package', 'rubygem-openshift-origin-console', {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
 
-  ensure_resource( 'package', 'openshift-origin-console', {
-    ensure  => present,
-    require => Yumrepo[openshift-origin]
-  })
+  ensure_resource('package', 'openshift-origin-console', {
+      ensure  => present,
+      require => Yumrepo[openshift-origin],
+    }
+  )
 
   file { 'openshift console.conf':
     path    => '/etc/openshift/console.conf',
@@ -48,7 +48,7 @@ class openshift_origin::console (
     owner   => 'apache',
     group   => 'apache',
     mode    => '0644',
-    require => Package['openshift-origin-console']
+    require => Package['openshift-origin-console'],
   }
 
   $console_asset_rake_cmd = $::operatingsystem ? {
@@ -56,12 +56,12 @@ class openshift_origin::console (
     default  => '/usr/bin/scl enable ruby193 "rake assets:precompile"',
   }
 
-  $console_bundle_show = $::operatingsystem  ? {
-    'Fedora'  => '/usr/bin/bundle install',
-    default   => '/usr/bin/scl enable ruby193 "bundle show"',
+  $console_bundle_show    = $::operatingsystem ? {
+    'Fedora' => '/usr/bin/bundle install',
+    default  => '/usr/bin/scl enable ruby193 "bundle show"',
   }
 
-  exec { 'Console gem dependencies' :
+  exec { 'Console gem dependencies':
     cwd         => '/var/www/openshift/console/',
     command     => "${::openshift_origin::rm} -f Gemfile.lock && \
     ${console_bundle_show} && \
@@ -74,42 +74,45 @@ class openshift_origin::console (
       Package['rubygem-openshift-origin-console'],
       File['openshift console.conf'],
     ],
-    refreshonly => true
+    refreshonly => true,
   }
 
-  ensure_resource( 'selboolean', 'httpd_can_network_connect', {
-    persistent => true,
-    value => 'on'
-  })
+  ensure_resource('selboolean', 'httpd_can_network_connect', {
+      persistent => true,
+      value      => 'on',
+    }
+  )
 
-  ensure_resource( 'selboolean', 'httpd_can_network_relay', {
-    persistent => true,
-    value => 'on'
-  })
+  ensure_resource('selboolean', 'httpd_can_network_relay', {
+      persistent => true,
+      value      => 'on',
+    }
+  )
 
-  ensure_resource( 'selboolean', 'httpd_read_user_content', {
-    persistent => true,
-    value => 'on'
-  })
+  ensure_resource('selboolean', 'httpd_read_user_content', {
+      persistent => true,
+      value      => 'on',
+    }
+  )
 
-  ensure_resource( 'selboolean', 'httpd_enable_homedirs', {
-    persistent => true,
-    value => 'on'
-  })
+  ensure_resource('selboolean', 'httpd_enable_homedirs', {
+      persistent => true,
+      value      => 'on',
+    }
+  )
 
-  ensure_resource( 'selboolean', 'httpd_execmem', {
-    persistent => true,
-    value => 'on'
-  })
+  ensure_resource('selboolean', 'httpd_execmem', {
+      persistent => true,
+      value      => 'on',
+    }
+  )
 
   if $::openshift_origin::enable_network_services == true {
     service { 'openshift-console':
-      require => [
-        Package['openshift-origin-console']
-      ],
+      require => Package['openshift-origin-console'],
       enable  => true,
     }
-  }else{
+  } else {
     warning 'Please ensure that openshift-console service is enable on console machines'
   }
 }

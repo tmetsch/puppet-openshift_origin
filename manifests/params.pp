@@ -42,7 +42,7 @@ class openshift_origin::params {
   }
 
   # Set the base firewall command for enableling services
-  $firewall_port_cmd = $::use_firewalld ? {
+  $firewall_port_cmd    = $::use_firewalld ? {
     true    => '/usr/bin/firewall-cmd --permanent --zone=public --add-port=',
     default => '/usr/sbin/lokkit --service=',
   }

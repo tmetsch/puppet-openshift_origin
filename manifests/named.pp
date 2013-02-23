@@ -31,6 +31,7 @@
 #
 class openshift_origin::named {
   include openshift_origin::params
+
   if $::openshift_origin::named_tsig_priv_key == '' {
     warning "Generate the Key file with '/usr/sbin/dnssec-keygen -a HMAC-MD5 -b 512 -n USER -r /dev/urandom -K /var/named ${openshift_origin::cloud_domain}'"
     warning "Use the last field in the generated key file /var/named/K${openshift_origin::cloud_domain}*.key"
@@ -53,7 +54,7 @@ class openshift_origin::named {
   exec { 'create rndc.key':
     command => '/usr/sbin/rndc-confgen -a -r /dev/urandom',
     unless  => '/usr/bin/[ -f /etc/rndc.key ]',
-    require => Package['bind']
+    require => Package['bind'],
   }
 
   file { '/etc/rndc.key':
@@ -75,7 +76,7 @@ class openshift_origin::named {
     owner   => 'named',
     group   => 'named',
     mode    => '0750',
-    require => Package['bind']
+    require => Package['bind'],
   }
 
   file { '/var/named/dynamic':
@@ -101,19 +102,19 @@ class openshift_origin::named {
     group   => 'named',
     mode    => '0644',
     content => template('openshift_origin/named/named.conf.erb'),
-    require => Package['bind']
+    require => Package['bind'],
   }
 
   if $openshift_origin::configure_firewall == true {
     exec { 'Open port for BIND':
       command => "${openshift_origin::params::firewall_service_cmd}dns",
-      require => Package['firewall-package']
+      require => Package['firewall-package'],
     }
   }
 
-  selboolean { ['named_write_master_zones'] :
+  selboolean { ['named_write_master_zones']:
     persistent => true,
-    value      => 'on'
+    value      => 'on',
   }
 
   exec { 'named restorecon':
@@ -135,6 +136,6 @@ class openshift_origin::named {
     ensure    => running,
     subscribe => File['/etc/named.conf'],
     enable    => true,
-    require   => Exec['named restorecon']
+    require   => Exec['named restorecon'],
   }
 }

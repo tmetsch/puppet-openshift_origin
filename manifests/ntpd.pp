@@ -31,15 +31,15 @@
 # limitations under the License.
 #
 class openshift_origin::ntpd (
-  $example = undef
-) {
-  ensure_resource( 'package', 'ntpdate', { ensure => 'latest' } )
+  $example = undef) {
+    ensure_resource('package', 'ntpdate', {
+      ensure => 'latest',
+    }
+  )
 
   class { 'ntp':
     ensure     => running,
-    servers    => [ 'time.apple.com iburst',
-                    'pool.ntp.org iburst',
-                    'clock.redhat.com iburst'],
-    autoupdate => true
+    servers    => ['time.apple.com iburst', 'pool.ntp.org iburst', 'clock.redhat.com iburst'],
+    autoupdate => true,
   }
 }
