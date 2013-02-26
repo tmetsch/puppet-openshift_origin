@@ -190,7 +190,7 @@ class openshift_origin::node {
     }
   }
 
-  if $::operatingsystem == 'Redhat' {
+  if($::operatingsystem == 'Redhat' or $::operatingsystem == 'CentOS') {
     if !defined(File['mcollective env']) {
       file { 'mcollective env':
         ensure  => present,
@@ -373,7 +373,7 @@ class openshift_origin::node {
 
     $openshift_init_provider = $::operatingsystem ? {
       'Fedora' => 'systemd',
-      'Centos' => 'systemd',
+      'CentOS' => 'redhat',
       default  => 'redhat',
     }
 
@@ -401,26 +401,19 @@ class openshift_origin::node {
     require => [Package['rubygem-openshift-origin-node']],
   }
 
-  case $::operatingsystem {
-    'Fedora' : {
-      exec { 'jenkins repo key':
-        command => '/usr/bin/rpm --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key',
-        creates => '/etc/yum.repos.d/jenkins.repo',
-      }
-
-      yumrepo { 'jenkins':
-        name     => 'jenkins',
-        baseurl  => 'http://pkg.jenkins-ci.org/redhat',
-        enabled  => 1,
-        gpgcheck => 1,
-      }
-
-      Exec['jenkins repo key'] -> Yumrepo['jenkins']
-    }
-    default  : {
-      # no changes required
-    }
+  exec { 'jenkins repo key':
+    command => "${::openshift_origin::rpm} --import http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key",
+    creates => '/etc/yum.repos.d/jenkins.repo',
   }
+
+  yumrepo { 'jenkins':
+    name     => 'jenkins',
+    baseurl  => 'http://pkg.jenkins-ci.org/redhat',
+    enabled  => 1,
+    gpgcheck => 1,
+  }
+
+  Exec['jenkins repo key'] -> Yumrepo['jenkins']
 
   if ($::openshift_origin::configure_broker == true and $::openshift_origin::configure_node == true) {
     file { 'broker and console route for node':

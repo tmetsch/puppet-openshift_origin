@@ -158,6 +158,11 @@ class openshift_origin (
     default  => '/sbin/service',
   }
 
+  $rpm       = $::operatingsystem ? {
+    'Fedora' => '/usr/bin/rpm',
+    default  => '/bin/rpm',
+  }
+
   $rm        = $::operatingsystem ? {
     'Fedora' => '/usr/bin/rm',
     default  => '/bin/rm',
@@ -408,7 +413,7 @@ class openshift_origin (
     }
   }
 
-  if $::operatingsystem == 'Redhat' {
+  if($::operatingsystem == 'Redhat' or $::operatingsystem == 'CentOS') {
     if !defined(File['/etc/profile.d/scl193.sh']) {
       file { '/etc/profile.d/scl193.sh':
         ensure  => present,
