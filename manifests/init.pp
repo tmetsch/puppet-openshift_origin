@@ -115,11 +115,13 @@ class openshift_origin (
   $configure_qpid             = false,
   $configure_mongodb          = true,
   $configure_named            = true,
+  $configure_avahi            = false,  
   $configure_broker           = true,
   $configure_console          = true,
   $configure_node             = true,
   $install_repo               = 'nightlies',
   $named_ipaddress            = $::ipaddress,
+  $avahi_ipaddress            = $::ipaddress,  
   $mongodb_fqdn               = $::fqdn,
   $mq_fqdn                    = $::fqdn,
   $broker_fqdn                = $::fqdn,
@@ -136,6 +138,7 @@ class openshift_origin (
   $broker_auth_key_password   = '',
   $broker_auth_salt           = 'ClWqe5zKtEW4CJEMyjzQ',
   $broker_rsync_key           = '',
+  $broker_dns_plugin          = 'nsupdate',  
   $mq_provider                = 'activemq',
   $mq_server_user             = 'mcollective',
   $mq_server_password         = 'marionette',
@@ -230,6 +233,10 @@ class openshift_origin (
 
   if $configure_named == true {
     include openshift_origin::named
+  }
+
+  if $configure_avahi == true {
+    include openshift_origin::avahi
   }
 
   if $create_origin_yum_repos == true {
