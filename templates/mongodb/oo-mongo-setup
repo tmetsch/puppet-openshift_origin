@@ -102,7 +102,7 @@ else
   run "/usr/bin/mongo localhost/openshift_broker_dev --eval 'db.addUser(\"openshift\", \"mooo\")'"
   run "/usr/bin/mongo localhost/admin --eval 'db.addUser(\"openshift\", \"mooo\")'"
   $log.info "......register mongo auth admin user"
-  run "/usr/bin/mongo openshift_broker_dev --username openshift --password mooo --eval 'db.auth_user.update({\"_id\":\"admin\"}, {\"_id\":\"admin\",\"user\":\"admin\",\"password\":\"2a8462d93a13e51387a5e607cbd1139f\"}, true)'"
+  run "/usr/bin/mongo openshift_broker_dev --username openshift --password mooo --eval 'db.auth_user.update({\"_id\":\"admin\"}, {\"_id\":\"admin\",\"user\":\"admin\",\"password_hash\":\"2a8462d93a13e51387a5e607cbd1139f\"}, true)'"
   stop_mongo
   $log.info "......enable mongo auth"
   find_and_replace("/etc/mongodb.conf", /^auth = .*$/, "auth = true")
