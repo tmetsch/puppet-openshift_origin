@@ -77,12 +77,13 @@ class openshift_origin::selinux {
   }
 
   if $::openshift_origin::set_sebooleans == true {
-    selboolean { [
+    $booleans = unique(flatten([ 
       $broker_booleans,
       $console_booleans,
       $named_booleans,
-      $node_booleans
-    ]:
+      $node_booleans,
+    ]))
+    selboolean { $booleans:
       persistent => true,
       value => 'on'
     }
