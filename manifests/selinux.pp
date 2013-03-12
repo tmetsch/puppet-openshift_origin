@@ -77,16 +77,15 @@ class openshift_origin::selinux {
   }
 
   if $::openshift_origin::set_sebooleans == true {
-    ensure_resource('selboolean', [
+    selboolean { [
       $broker_booleans,
       $console_booleans,
       $named_booleans,
       $node_booleans
-    ], {
-        persistent => true,
-        value      => 'on',
-      }
-    )
+    ]:
+      persistent => true,
+      value => 'on'
+    }
   }
   
   if $openshift_origin::set_sebooleans == 'delayed' {
