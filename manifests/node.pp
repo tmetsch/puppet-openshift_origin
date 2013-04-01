@@ -79,6 +79,10 @@ class openshift_origin::node {
       ensure => present
     }
   )
+  ensure_resource('package', 'oddjob', {
+      ensure => present
+    }
+  )
 
   if $::openshift_origin::configure_firewall == true {
     $webproxy_http_port = $::use_firewalld ? {
@@ -170,6 +174,29 @@ class openshift_origin::node {
     }
   } else {
     warning 'Please ensure that quotas are enabled for /var/lib/openshift'
+  }
+
+  if $::openshift_origin::configure_fs_quotas == true {
+    if $::operatingsystem == "Fedora" {
+      if $::operatingsystemrelease == "18" {
+        file { 'quota enable service':
+          ensure  => present,
+          path    => '/usr/lib/systemd/system/openshift-quotaon.service',
+          content => template('openshift_origin/openshift-quotaon.service'),
+          owner   => 'root',
+          group   => 'root',
+          mode    => '0644',
+          require => [],
+        }
+        service { ['openshift-quotaon']:
+          require => [
+            File['quota enable service'],
+          ],
+          provider => 'systemd',
+          enable => true,
+        }
+      }
+    }
   }
 
   if $::openshift_origin::configure_cgroups == true {
@@ -329,6 +356,11 @@ class openshift_origin::node {
       require => Package['cronie']
     }
 
+    service { 'oddjobd':
+      enable  => true,
+      require => Package['oddjob']
+    }
+
     $openshift_init_provider = $::operatingsystem ? {
       'Fedora' => 'systemd',
       'CentOS' => 'redhat',
@@ -350,7 +382,7 @@ class openshift_origin::node {
       enable  => true,
     }
   } else {
-    warning 'Please ensure that mcollective, cron, openshift-gears, openshift-node-web-proxy are running on all nodes'
+    warning 'Please ensure that mcollective, cron, openshift-gears, openshift-node-web-proxy, and oddjobd are running on all nodes'
   }
 
   exec { 'Restoring SELinux contexts':
@@ -396,58 +428,143 @@ class openshift_origin::node {
     }
   }
 
-  package { [
-    'openshift-origin-cartridge-abstract',
-    'openshift-origin-cartridge-10gen-mms-agent-0.1',
-    'openshift-origin-cartridge-cron-1.4',
-    'openshift-origin-cartridge-diy-0.1',
-    'openshift-origin-cartridge-haproxy-1.4',
-    'openshift-origin-cartridge-mongodb-2.2',
-    'openshift-origin-cartridge-mysql-5.1',
-    'openshift-origin-cartridge-nodejs-0.6',
-    'openshift-origin-cartridge-jenkins-1.4',
-    'openshift-origin-cartridge-jenkins-client-1.4',
-    'openshift-origin-cartridge-community-python-2.7',
-    'openshift-origin-cartridge-community-python-3.3',
-  ]:
-    ensure  => present,
-    require => [
-      Yumrepo[openshift-origin],
-      Yumrepo[openshift-origin-deps],
-    ],
+  if ($::openshift_origin::configure_node == true) {
+    if $::operatingsystem == "Fedora" {
+      file { 'allow cartridge files through apache':
+        ensure  => present,
+        path    => '/etc/httpd/conf.d/cartridge_files.conf',
+        content => template('openshift_origin/node/cartridge_files.conf.erb'),
+        owner   => 'root',
+        group   => 'root',
+        mode    => '0660',
+        require =>  Package['httpd'],
+      }
+    }
   }
 
-  case $::operatingsystem {
-    'Fedora' : {
-      package { [
+  if ($::openshift_origin::use_v2_carts == false) {
+    package { [
+      'openshift-origin-cartridge-abstract',
+      'openshift-origin-cartridge-10gen-mms-agent-0.1',
+      'openshift-origin-cartridge-cron-1.4',
+      'openshift-origin-cartridge-diy-0.1',
+      'openshift-origin-cartridge-haproxy-1.4',
+      'openshift-origin-cartridge-mongodb-2.2',
+      'openshift-origin-cartridge-mysql-5.1',
+      'openshift-origin-cartridge-nodejs-0.6',
+      'openshift-origin-cartridge-jenkins-1.4',
+      'openshift-origin-cartridge-jenkins-client-1.4',
+      'openshift-origin-cartridge-community-python-2.7',
+      'openshift-origin-cartridge-community-python-3.3',
+    ]:
+      ensure  => present,
+      require => [
+        Yumrepo[openshift-origin],
+        Yumrepo[openshift-origin-deps],
+      ],
+    }
+
+    case $::operatingsystem {
+      'Fedora' : {
+        package { [
+          'openshift-origin-cartridge-postgresql-9.2',
+          'openshift-origin-cartridge-ruby-1.9',
+          'openshift-origin-cartridge-php-5.4',
+          'openshift-origin-cartridge-perl-5.16',
+          'openshift-origin-cartridge-phpmyadmin-3.5',
+        ]:
+          ensure  => present,
+          require => [
+            Yumrepo[openshift-origin],
+            Yumrepo[openshift-origin-deps],
+          ],
+        }
+      }
+      default  : {
+        package { [
+          'openshift-origin-cartridge-postgresql-8.4',
+          'openshift-origin-cartridge-ruby-1.9-scl',
+          'openshift-origin-cartridge-ruby-1.8',
+          'openshift-origin-cartridge-php-5.3',
+          'openshift-origin-cartridge-perl-5.10',
+          'openshift-origin-cartridge-python-2.6',
+          'openshift-origin-cartridge-phpmyadmin-3.4',
+        ]:
+          ensure  => present,
+          require => [
+            Yumrepo[openshift-origin],
+            Yumrepo[openshift-origin-deps],
+          ],
+        }
+      }
+    }
+
+    file { 'remove v2 cartridge marker':
+      ensure  => absent,
+      path    => '/var/lib/openshift/.settings/v2_cartridge_format'
+    }
+
+    file { 'remove node setting markers dir':
+      ensure  => absent,
+      path    => '/var/lib/openshift/.settings',
+      require => File['remove v2 cartridge marker']
+    }
+  } else {
+    file { 'create node setting markers dir':
+      ensure  => 'directory',
+      path    => '/var/lib/openshift/.settings',
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755'
+    }
+
+    file { 'create v2 cartridge marker':
+      ensure  => present,
+      path    => '/var/lib/openshift/.settings/v2_cartridge_format',
+      content => '',
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0644',
+      require => File['create node setting markers dir']
+    }
+
+    package { [
+        'openshift-origin-cartridge-10gen-mms-agent-0.1',
+        'openshift-origin-cartridge-cron-1.4',
+        'openshift-origin-cartridge-diy-0.1',
+        'openshift-origin-cartridge-haproxy-1.4',
+        'openshift-origin-cartridge-mongodb-2.2',
+        'openshift-origin-cartridge-mysql-5.1',
+        'openshift-origin-cartridge-nodejs-0.6',
+        'openshift-origin-cartridge-jenkins-1.4',
+        'openshift-origin-cartridge-jenkins-client-1.4',
+        'openshift-origin-cartridge-community-python-2.7',
+        'openshift-origin-cartridge-community-python-3.3',
         'openshift-origin-cartridge-postgresql-9.2',
         'openshift-origin-cartridge-ruby-1.9',
         'openshift-origin-cartridge-php-5.4',
         'openshift-origin-cartridge-perl-5.16',
         'openshift-origin-cartridge-phpmyadmin-3.5',
-      ]:
-        ensure  => present,
-        require => [
-          Yumrepo[openshift-origin],
-          Yumrepo[openshift-origin-deps],
-        ],
-      }
-    }
-    default  : {
-      package { [
         'openshift-origin-cartridge-postgresql-8.4',
         'openshift-origin-cartridge-ruby-1.9-scl',
+        'openshift-origin-cartridge-ruby-1.8',
         'openshift-origin-cartridge-php-5.3',
         'openshift-origin-cartridge-perl-5.10',
         'openshift-origin-cartridge-python-2.6',
         'openshift-origin-cartridge-phpmyadmin-3.4',
       ]:
-        ensure  => present,
-        require => [
-          Yumrepo[openshift-origin],
-          Yumrepo[openshift-origin-deps],
-        ],
-      }
+        ensure  => absent,
+    }
+
+    package { [
+      'openshift-origin-cartridge-abstract',
+      'openshift-origin-cartridge-php',
+    ]:
+      ensure  => present,
+      require => [
+        Yumrepo[openshift-origin],
+        Yumrepo[openshift-origin-deps],
+      ],
     }
   }
 }

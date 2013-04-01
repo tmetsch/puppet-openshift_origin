@@ -1,15 +1,17 @@
 # puppet-openshift_origin
 
-Author: Jamey Owens
-Author: Ben Klang
-Author: Ben Langfeld
-Author: Krishna Raman
-
 # About
 
 This module helps install [OpenShift Origin](https://openshift.redhat.com/community/open-source) Platform As A Service.
 Through the declaration of the `openshift_origin` class, you can configure the OpenShift Origin Broker, Node and support
 services including ActiveMQ, Qpid, MongoDB, named and OS settings including firewall, startup services, and ntp.
+
+## Authors
+
+* Jamey Owens
+* Ben Klang
+* Ben Langfeld
+* Krishna Raman
 
 # Requirements
 
@@ -43,31 +45,65 @@ this class.
 
 [Using Parameterized Classes](http://docs.puppetlabs.com/guides/parameterized_classes.html)
 
-Example: Single host (broker+console+node) which uses the Avahi MDNS and mongo Auth plugin:
+### Example: Single host (broker+console+node) which uses the Avahi MDNS and mongo Auth plugin:
 
-```puppet
-class { 'openshift_origin' :
-  node_fqdn                  => "${hostname}.${domain}",
-  cloud_domain               => 'openshift.local',
-  dns_servers                => ['8.8.8.8'],
-  os_unmanaged_users         => [],
-  enable_network_services    => true,
-  configure_firewall         => true,
-  configure_ntp              => true,
-  configure_activemq         => true,
-  configure_mongodb          => true,
-  configure_named            => false,
-  configure_avahi            => true,
-  configure_broker           => true,
-  configure_node             => true,
-  development_mode           => true,
-  update_network_dns_servers => false,
-  avahi_ipaddress            => '127.0.0.1',
-  broker_dns_plugin          => 'avahi',
-}
-```
+    class { 'openshift_origin' :
+      node_fqdn                  => "${hostname}.${domain}",
+      cloud_domain               => 'openshift.local',
+      dns_servers                => ['8.8.8.8'],
+      os_unmanaged_users         => [],
+      enable_network_services    => true,
+      configure_firewall         => true,
+      configure_ntp              => true,
+      configure_activemq         => true,
+      configure_mongodb          => true,
+      configure_named            => false,
+      configure_avahi            => true,
+      configure_broker           => true,
+      configure_node             => true,
+      development_mode           => true,
+      update_network_dns_servers => false,
+      avahi_ipaddress            => '127.0.0.1',
+      broker_dns_plugin          => 'avahi',
+    }
 
-## Parameters
+### Example: Single host (broker+console+node) which uses the **Kerberos** Auth plugin. 
+
+    class { 'openshift_origin' :
+      node_fqdn                  => "${hostname}.${domain}",
+      cloud_domain               => 'openshift.local',
+      dns_servers                => ['8.8.8.8'],
+      os_unmanaged_users         => [],
+      enable_network_services    => true,
+      configure_firewall         => true,
+      configure_ntp              => true,
+      configure_activemq         => true,
+      configure_mongodb          => true,
+      configure_named            => false,
+      configure_avahi            => true,
+      configure_broker           => true,
+      configure_node             => true,
+      development_mode           => true,
+      broker_auth_plugin         => 'kerberos',
+      kerberos_keytab            => '/var/www/openshift/broker/httpd/conf.d/http.keytab',
+      kerberos_realm             => 'EXAMPLE.COM',
+      kerberos_service           => $node_fqdn,
+    }
+
+Please note:
+
+* The Broker needs to be enrolled in the KDC as a host, `host/node_fqdn` as well as a service, `HTTP/node_fqdn`
+* Keytab should be generated, is located on the Broker machine, and Apache should be able to access it (`chown apache <kerberos_keytab>`)
+* Like the example config below:
+  * set `broker_auth_plugin` to `'kerberos'`
+  * set `kerberos_keytab` to the absolute file location of the keytab
+  * set `kerberos_realm` to the kerberos realm that the Broker host is enrolled with
+  * set `kerberos_service` to the kerberos service, e.g. `HTTP/node_fqdn`
+* After setup, `kinit <user>` then test the setup with `curl -Ik --negotiate -u : <node_fqdn>`.
+* For any errors, on the Broker, check `/var/log/openshift/broker/httpd/error_log`.
+
+
+# Parameters
 
 The following lists all the class parameters the `openshift_origin` class accepts.
 
@@ -190,8 +226,8 @@ set to false, it is expected that cgroups are configured elsewhere in the Puppet
 
 ### broker_auth_plugin
 
-The authentication plugin to use with the OpenShift OpenShift Broker. Supported values are `'mongo'` and
-`'basic-auth'`
+The authentication plugin to use with the OpenShift OpenShift Broker. Supported values are `'mongo'`,
+`'basic-auth'`, and `'kerberos'`
 
 ### broker_auth_pub_key
 
@@ -209,6 +245,18 @@ Password for `broker_auth_priv_key` private key
 ### broker_auth_salt
 
 Salt used to generate authentication tokens for communication between node and broker.
+
+### kerberos_keytab
+
+The full/absolute path to the Kerberos keytab for the Broker service, e.g. `'/var/www/openshift/broker/http/conf.d/http.keytab'`.
+
+### kerberos_realm
+
+The hostname in all caps that the Broker host/service is enrolled with, e.g. `'EXAMPLE.COM'`
+
+### kerberos_service
+
+The fully-qualified domain name that the service is enrolled with in your Kerberos setup. Do not include `HTTP/`, just the fqdn, e.g. `'example.com'` or just `$node_fqdn`.
 
 ### broker_rsync_key
 
@@ -257,35 +305,32 @@ resolution. (This should be false if using Avahi for MDNS updates)
 
 Set to true to enable development mode and detailed logging
 
-
-Known Issues
-============
+# Known Issues
 
 ## Facter
 
 Facter broken on Fedora 17. http://projects.puppetlabs.com/issues/15001
 
-```puppet
-yumrepo { 'puppetlabs-products':
-  name     => 'puppetlabs-products',
-  descr    => 'Puppet Labs Products Fedora 17 - $basearch',
-  baseurl  => 'http://yum.puppetlabs.com/fedora/f17/dependencies/\$basearch',
-  gpgkey   => 'http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs',
-  enabled  => 1,
-  gpgcheck => 1,
-}
-
-yumrepo { 'puppetlabs-deps':
-  name     => 'puppetlabs-deps',
-  descr    => 'Puppet Labs Dependencies Fedora 17 - $basearch',
-  baseurl  => 'http://yum.puppetlabs.com/fedora/f17/products/\$basearch',
-  gpgkey   => 'http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs',
-  enabled  => 1,
-  gpgcheck => 1,
-}
-
-package { 'facter':
-  ensure  => latest,
-  require => [Yumrepo['puppetlabs-products'],Yumrepo['puppetlabs-deps']],
-}
-```
+    yumrepo { 'puppetlabs-products':
+      name     => 'puppetlabs-products',
+      descr    => 'Puppet Labs Products Fedora 17 - $basearch',
+      baseurl  => 'http://yum.puppetlabs.com/fedora/f17/dependencies/\$basearch',
+      gpgkey   => 'http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs',
+      enabled  => 1,
+      gpgcheck => 1,
+    }
+    
+    yumrepo { 'puppetlabs-deps':
+      name     => 'puppetlabs-deps',
+      descr    => 'Puppet Labs Dependencies Fedora 17 - $basearch',
+      baseurl  => 'http://yum.puppetlabs.com/fedora/f17/products/\$basearch',
+      gpgkey   => 'http://yum.puppetlabs.com/RPM-GPG-KEY-puppetlabs',
+      enabled  => 1,
+      gpgcheck => 1,
+    }
+    
+    package { 'facter':
+      ensure  => latest,
+      require => [Yumrepo['puppetlabs-products'],Yumrepo['puppetlabs-deps']],
+    }
+    

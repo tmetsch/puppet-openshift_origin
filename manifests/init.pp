@@ -34,6 +34,8 @@
 #   True if an OpenShift Origin console should be installed and configured on this node.
 # [*configure_node*]
 #   True if an OpenShift Origin node should be installed and configured on this node.
+# [*use_v2_carts*]
+#   True if an OpenShift Origin node should be configured to use v2 cartridges. (Alpha)
 # [*set_sebooleans*]
 #   Set to true to setup selinux booleans. Set to 'delayed' to setup selinux booleans upon next boot.
 # [*install_repo*]
@@ -139,11 +141,13 @@ class openshift_origin (
   $configure_broker           = true,
   $configure_console          = true,
   $configure_node             = true,
+  $use_v2_carts               = false,
   $set_sebooleans             = true,
+  $install_login_shell        = false,
   $install_repo               = 'nightlies',
   $named_ipaddress            = $::ipaddress,
   $avahi_ipaddress            = $::ipaddress,  
-  $mongodb_fqdn               = $::fqdn,
+  $mongodb_fqdn               = 'localhost',
   $mq_fqdn                    = $::fqdn,
   $broker_fqdn                = $::fqdn,
   $cloud_domain               = 'example.com',
@@ -160,6 +164,9 @@ class openshift_origin (
   $broker_auth_salt           = 'ClWqe5zKtEW4CJEMyjzQ',
   $broker_rsync_key           = '',
   $broker_dns_plugin          = 'nsupdate',  
+  $kerberos_keytab            = '/var/www/openshift/broker/httpd/conf.d/http.keytab',
+  $kerberos_realm             = 'EXAMPLE.COM',
+  $kerberos_service           = $::fqdn,
   $mq_provider                = 'activemq',
   $mq_server_user             = 'mcollective',
   $mq_server_password         = 'marionette',
@@ -173,8 +180,8 @@ class openshift_origin (
 ) {
   include openshift_origin::params
 
-  if $::facterversion == '1.6.16' {
-    fail 'Factor version needs to be updated to at least 1.6.17'
+  if $::facterversion <= '1.6.16' {
+    fail 'Facter version needs to be updated to at least 1.6.17'
   }
 
   $service   = $::operatingsystem ? {
@@ -312,6 +319,12 @@ class openshift_origin (
   }
   )
 
+  ensure_resource('package', 'ruby-devel', {
+      ensure  => present,
+    }
+  )
+
+
   if $enable_network_services == true {
     service { [httpd, network, sshd]:
       enable  => true,
@@ -374,6 +387,10 @@ class openshift_origin (
   
   if ($set_sebooleans == true or $set_sebooleans == 'delayed') {
     include openshift_origin::selinux
+  }
+  
+  if ($install_login_shell == true) {
+    include openshift_origin::custom_shell
   }
 
   if $install_client_tools == true {

@@ -1,4 +1,4 @@
-#!/usr/bin/env oo-ruby
+#!/usr/bin/env ruby
 #--
 # Copyright 2010 Red Hat, Inc.
 # 
@@ -16,11 +16,11 @@
 #++
 
 require 'rubygems'
-require 'parseconfig'
-require 'getoptlong'
 require 'fileutils'
 require 'logger'
 require 'open4'
+require 'socket'
+
 $log = Logger.new(STDOUT)
 $log.level = Logger::INFO
 
@@ -97,6 +97,13 @@ else
   $log.info "......disable mongo auth"
   insert_if_not_exist("/etc/mongodb.conf", /^smallfiles = .*$/, "smallfiles = true")
   find_and_replace("/etc/mongodb.conf", /^#?auth = .*$/, "auth = false")
+  hostname = Socket.gethostname
+  ipaddr   = IPSocket.getaddress(hostname)
+  if(ipaddr == '127.0.0.1')
+    find_and_replace("/etc/mongodb.conf", /^#?bind_ip = .*$/, "bind_ip = 127.0.0.1")
+  else
+    find_and_replace("/etc/mongodb.conf", /^#?bind_ip = .*$/, "bind_ip = 127.0.0.1,#{ipaddr}")
+  end
   restart_mongo
   $log.info "......set db admin users"
   run "/usr/bin/mongo localhost/openshift_broker_dev --eval 'db.addUser(\"openshift\", \"mooo\")'"
