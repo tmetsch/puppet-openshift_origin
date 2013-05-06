@@ -577,16 +577,49 @@ class openshift_origin::node {
         ensure  => absent,
     }
 
-    package { [
-      'openshift-origin-cartridge-abstract',
-      'openshift-origin-cartridge-php',
-    ]:
-      ensure  => present,
-      require => [
-        Yumrepo[openshift-origin],
-        Yumrepo[openshift-origin-deps],
-      ],
-      notify => Exec['oo-admin-cartridge'],
+    case $::operatingsystem {
+      'Fedora' : {
+        package { [
+          'openshift-origin-cartridge-abstract',
+          'openshift-origin-cartridge-php',
+        ]:
+          ensure  => present,
+          require => [
+            Yumrepo[openshift-origin],
+            Yumrepo[openshift-origin-deps],
+          ],
+          notify => Exec['oo-admin-cartridge'],
+        }
+      }
+      default  : {
+        package { [
+          'openshift-origin-cartridge-abstract',
+          'openshift-origin-cartridge-php',
+          'openshift-origin-cartridge-10gen-mms-agent',
+          'openshift-origin-cartridge-cron',
+          'openshift-origin-cartridge-diy',
+          'openshift-origin-cartridge-haproxy',
+          'openshift-origin-cartridge-jenkins',
+          'openshift-origin-cartridge-jenkins-client',
+          'openshift-origin-cartridge-mock',
+          'openshift-origin-cartridge-mock-plugin',
+          'openshift-origin-cartridge-mongodb',
+          'openshift-origin-cartridge-mysql',
+          'openshift-origin-cartridge-nodejs',
+          'openshift-origin-cartridge-perl',
+          'openshift-origin-cartridge-phpmyadmin',
+          'openshift-origin-cartridge-postgresql',
+          'openshift-origin-cartridge-python',
+          'openshift-origin-cartridge-ruby',
+        ]:
+          ensure  => present,
+          require => [
+            Yumrepo[openshift-origin],
+            Yumrepo[openshift-origin-deps],
+          ],
+          notify => Exec['oo-admin-cartridge'],
+        }
+      }
     }
     
     # Note, this does not handle cartridge uninstalls
