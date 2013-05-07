@@ -1122,6 +1122,18 @@ class openshift_origin::broker {
     default  => '/usr/bin/scl enable ruby193 "bundle show"',
   }
 
+  # This File resource is to guarantee that the Gemfile.lock created
+  # by the following Exec has the appropriate permissions (otherwise
+  # it is created as owned by root:root)  
+  file { '/var/www/openshift/broker/Gemfile.lock':
+    owner     => 'apache',
+    group     => 'apache',
+    mode      => '0644',
+    subscribe => Exec ['Broker gem dependencies'],
+    require   => Exec ['Broker gem dependencies'],
+    ensure    => 'present'
+  }
+
   exec { 'Broker gem dependencies':
     cwd     => '/var/www/openshift/broker/',
     command => "${::openshift_origin::rm} -f Gemfile.lock && \
