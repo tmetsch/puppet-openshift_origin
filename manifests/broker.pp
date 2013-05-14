@@ -1126,12 +1126,12 @@ class openshift_origin::broker {
   # by the following Exec has the appropriate permissions (otherwise
   # it is created as owned by root:root)  
   file { '/var/www/openshift/broker/Gemfile.lock':
+    ensure    => 'present',
     owner     => 'apache',
     group     => 'apache',
     mode      => '0644',
     subscribe => Exec ['Broker gem dependencies'],
     require   => Exec ['Broker gem dependencies'],
-    ensure    => 'present'
   }
 
   exec { 'Broker gem dependencies':

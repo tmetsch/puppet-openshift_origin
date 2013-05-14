@@ -208,12 +208,12 @@ class openshift_origin::console {
   # by the following Exec has the appropriate permissions (otherwise
   # it is created as owned by root:root)  
   file { '/var/www/openshift/console/Gemfile.lock':
+    ensure    => 'present',
     owner     => 'apache',
     group     => 'apache',
     mode      => '0644',
     subscribe => Exec ['Console gem dependencies'],
     require   => Exec ['Console gem dependencies'],
-    ensure    => 'present'
   }
 
   exec { 'Console gem dependencies':
