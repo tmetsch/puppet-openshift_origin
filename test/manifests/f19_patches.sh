@@ -5,7 +5,7 @@ if [ -a /etc/yum.repos.d/fedora-updates-testing.repo ] ; then
   mv /etc/yum.repos.d/fedora-updates-testing.repo /etc/yum.repos.d/fedora-updates-testing.disabled;
 fi
 
-yum install --skip-broken -y ruby ruby-irb ruby-libs ruby-devel rubygem-thor puppet git rubygem-cucumber
+yum install --skip-broken -y ruby ruby-irb ruby-libs ruby-devel rubygem-thor puppet git rubygem-cucumber tar
 yum install -y mod_passenger rubygem-passenger rubygem-passenger-devel rubygem-passenger-native rubygem-passenger-native-libs
 
 yum update -y --exclude=kernel* --skip-broken
@@ -26,3 +26,5 @@ cp -f /usr/lib64/gems/ruby/${PASSENGER_VERSION}/lib/native/* /usr/share/gems/gem
 
 DEVICE=`ip link | grep BROADCAST | awk ' BEGIN {FS=": "} {print $2}'`
 sed -i "s/eth_device.*/eth_device => '${DEVICE}'/" /home/vagrant/manifests/configure.pp
+sed -i "s/\$dev=.*/\$dev='${DEVICE}'/" /home/vagrant/manifests/init.pp
+rm -f /etc/sysconfig/network-scripts/ifcfg-enp0s3

@@ -8,9 +8,15 @@ exec { 'generate tsig key':
   require => Package['bind'],
 }
 
+$dev='p2p1'
 augeas{ 'network setup' :
-  context => '/files/etc/sysconfig/network-scripts/ifcfg-eth0',
+  context => "/files/etc/sysconfig/network-scripts/ifcfg-${dev}",
   changes => [
+    "set NAME ${dev}",
+    'set ONBOOT yes',
+    'set TYPE Ethernet',
+    'set BOOTPROTO dhcp',
     'set PEERDNS no',
+    'set DNS1 8.8.8.8',
   ],
 }

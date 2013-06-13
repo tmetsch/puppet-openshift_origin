@@ -13,12 +13,11 @@ Vagrant::Config.run do |config|
   config.vm.provision :shell, :inline => %{ \
     sudo bash -x /home/vagrant/manifests/f19_patches.sh | tee -a /var/log/origin-setup.log; \
     touch /var/log/origin-setup.log; \
+    sudo /bin/puppet apply --verbose /home/vagrant/manifests/init.pp      | tee -a /var/log/origin-setup.log; \
+    sudo /bin/systemctl restart  network.service                   | tee -a /var/log/origin-setup.log; \
     sudo /bin/puppet module uninstall openshift/openshift_origin          | tee -a /var/log/origin-setup.log; \
     sudo /bin/puppet module install openshift/openshift_origin            | tee -a /var/log/origin-setup.log; \
-    sudo /bin/puppet apply --verbose /home/vagrant/manifests/init.pp      | tee -a /var/log/origin-setup.log; \
     sudo /bin/puppet apply --verbose /home/vagrant/manifests/configure.pp | tee -a /var/log/origin-setup.log; \
-  
-    sudo /bin/systemctl restart  network.service                   | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  activemq.service                  | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  cgconfig.service                  | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  cgred.service                     | tee -a /var/log/origin-setup.log; \
