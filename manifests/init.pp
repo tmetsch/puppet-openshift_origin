@@ -327,6 +327,13 @@ class openshift_origin (
     }
   }
 
+  if($::operatingsystem == 'Redhat' or $::operatingsystem == 'CentOS') {
+    #Exclude nodejs of epel repo
+    yumrepo { 'epel':
+      exclude => 'nodejs*'
+    }
+  }
+
   ensure_resource('package', 'policycoreutils', {
   }
   )
