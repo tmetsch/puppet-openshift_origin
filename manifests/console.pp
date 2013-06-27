@@ -84,36 +84,42 @@ class openshift_origin::console {
     ensure_resource('package', 'rubygem-sass-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-sass-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'rubygem-jquery-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-jquery-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'rubygem-coffee-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-coffee-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'rubygem-compass-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-compass-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'rubygem-uglifier', {
         ensure   => 'latest',
         alias    => 'rubygem-uglifier',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'rubygem-therubyracer', {
         ensure   => 'latest',
         alias    => 'rubygem-therubyracer',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
@@ -129,10 +135,10 @@ class openshift_origin::console {
       }
     )
 
-    ensure_resource('package', 'formtastic', {
-        ensure   => '1.2.4',
-        provider => 'gem',
-        alias    => 'rubygem-formtastic'
+    ensure_resource('package', 'rubygem-formtastic', {
+        ensure   => 'latest',
+        alias    => 'rubygem-formtastic',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
@@ -153,6 +159,7 @@ class openshift_origin::console {
     ensure_resource('package', 'rubygem-ci_reporter', {
         ensure   => 'latest',
         alias    => 'ci_reporter',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
   }
@@ -161,66 +168,77 @@ class openshift_origin::console {
     ensure_resource('package', 'ruby193-rubygem-ci_reporter', {
         ensure   => 'latest',
         alias    => 'rubygem-ci_reporter',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-sass-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-sass-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-jquery-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-jquery-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-coffee-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-coffee-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-compass-rails', {
         ensure   => 'latest',
         alias    => 'rubygem-compass-rails',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-uglifier', {
         ensure   => 'latest',
         alias    => 'rubygem-uglifier',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-therubyracer', {
         ensure   => 'latest',
         alias    => 'rubygem-therubyracer',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-rdiscount', {
         ensure   => 'latest',
         alias    => 'rubygem-rdiscount',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-net-http-persistent', {
         ensure   => 'latest',
         alias    => 'rubygem-net-http-persistent',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-haml', {
         ensure   => 'latest',
         alias    => 'rubygem-haml',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
 
     ensure_resource('package', 'ruby193-rubygem-formtastic', {
         ensure   => 'latest',
         alias    => 'rubygem-formtastic',
+        require => Yumrepo[openshift-origin-deps],
       }
     )
   }

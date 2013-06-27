@@ -34,8 +34,6 @@
 #   True if an OpenShift Origin console should be installed and configured on this node.
 # [*configure_node*]
 #   True if an OpenShift Origin node should be installed and configured on this node.
-# [*use_v2_carts*]
-#   True if an OpenShift Origin node should be configured to use v2 cartridges. (Alpha)
 # [*set_sebooleans*]
 #   Set to true to setup selinux booleans. Set to 'delayed' to setup selinux booleans upon next boot.
 # [*install_repo*]
@@ -145,7 +143,6 @@ class openshift_origin (
   $configure_broker           = true,
   $configure_console          = true,
   $configure_node             = true,
-  $use_v2_carts               = false,
   $set_sebooleans             = true,
   $install_login_shell        = false,
   $install_repo               = 'nightlies',
