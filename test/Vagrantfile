@@ -1,7 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant::Config.run do |config|
+Vagrant.configure("2") do |config|
+
   config.vm.box = 'f19'
   config.vm.box_url = 'http://www.krishnaraman.net/downloads/fedora-19.box'
   config.vm.forward_port 80, 8080
@@ -9,6 +10,11 @@ Vagrant::Config.run do |config|
   config.vm.forward_port 53, 53
   config.vm.host_name = 'broker.example.com'
   
+  config.vm.provider :virtualbox do |vb|
+    # Boot with headless mode vb.gui = true
+    vb.customize ["modifyvm", :id, "--memory", "2048"]
+  end
+
   config.vm.share_folder "manifests", "/home/vagrant/manifests", "manifests"
   config.vm.provision :shell, :inline => %{ \
     sudo bash -x /home/vagrant/manifests/f19_patches.sh | tee -a /var/log/origin-setup.log; \
