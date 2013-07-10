@@ -15,8 +15,10 @@ Vagrant::Config.run do |config|
     touch /var/log/origin-setup.log; \
     sudo /bin/puppet apply --verbose /home/vagrant/manifests/init.pp      | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  network.service                   | tee -a /var/log/origin-setup.log; \
-    sudo /bin/puppet module uninstall openshift/openshift_origin          | tee -a /var/log/origin-setup.log; \
-    sudo /bin/puppet module install openshift/openshift_origin            | tee -a /var/log/origin-setup.log; \
+    sudo rm -rf /etc/puppet/modules/{openshift_origin,ntp,stdlib}  | tee -a /var/log/origin-setup.log; \
+    sudo git clone https://github.com/dizz/puppet-openshift_origin /etc/puppet/modules/openshift_origin  | tee -a /var/log/origin-setup.log; \
+    sudo git clone https://github.com/puppetlabs/puppetlabs-ntp /etc/puppet/modules/ntp    | tee -a /var/log/origin-setup.log; \
+    sudo git clone https://github.com/puppetlabs/puppetlabs-stdlib /etc/puppet/modules/stdlib | tee -a /var/log/origin-setup.log; \
     sudo /bin/puppet apply --verbose /home/vagrant/manifests/configure.pp | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  activemq.service                  | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  cgconfig.service                  | tee -a /var/log/origin-setup.log; \
