@@ -242,6 +242,7 @@ class openshift_origin::node {
   if $::openshift_origin::node_container == 'selinux' {
     ensure_resource('package', "rubygem-openshift-origin-container-selinux", {
         ensure  => present,
+        require => Yumrepo['openshift-origin'],
       }
     )
 
@@ -369,6 +370,7 @@ class openshift_origin::node {
   if $::openshift_origin::node_container == 'libvirt-lxc' {
     ensure_resource('package', 'libvirt-daemon', {
         ensure  => present,
+        require => Yumrepo['openshift-origin'],
       }
     )
 

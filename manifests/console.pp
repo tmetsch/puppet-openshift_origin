@@ -91,6 +91,7 @@ class openshift_origin::console {
     ensure_resource('package', 'rubygem-poltergeist', {
         ensure   => 'latest',
         alias    => 'poltergeist',
+        require  => [Yumrepo['openshift-origin-deps']],
       }
     )
 
