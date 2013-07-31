@@ -587,7 +587,7 @@ class openshift_origin::node {
   
   # Note, this does not handle cartridge uninstalls
   exec { 'oo-admin-cartridge':
-    command => '/usr/sbin/oo-admin-cartridge --recursive -a install -s /usr/libexec/openshift/cartridges/v2/',
+    command => '/usr/sbin/oo-admin-cartridge --recursive -a install -s /usr/libexec/openshift/cartridges/',
     refreshonly => true,
     notify => Exec['openshift-facts'],
   }
