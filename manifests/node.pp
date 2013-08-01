@@ -223,6 +223,7 @@ class openshift_origin::node {
         'cgconfig',
         'cgred',
         'openshift-port-proxy',
+        'openshift-tc',
       ]:
         require => [
           Package['rubygem-openshift-origin-node'],
