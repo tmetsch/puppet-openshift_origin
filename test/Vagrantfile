@@ -1,8 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure("2") do |config|
-
+Vagrant::Config.run do |config|
   config.vm.box = 'f19'
   config.vm.box_url = 'http://www.krishnaraman.net/downloads/fedora-19.box'
   config.vm.forward_port 80, 8080
@@ -10,27 +9,19 @@ Vagrant.configure("2") do |config|
   config.vm.forward_port 53, 53
   config.vm.host_name = 'broker.example.com'
   
-  config.vm.provider :virtualbox do |vb|
-    # Boot with headless mode vb.gui = true
-    vb.customize ["modifyvm", :id, "--memory", "2048"]
-  end
-
   config.vm.share_folder "manifests", "/home/vagrant/manifests", "manifests"
   config.vm.provision :shell, :inline => %{ \
-    sudo bash -x /home/vagrant/manifests/f19_patches.sh | tee -a /var/log/origin-setup.log; \
     touch /var/log/origin-setup.log; \
     sudo /bin/puppet apply --verbose /home/vagrant/manifests/init.pp      | tee -a /var/log/origin-setup.log; \
-    sudo /bin/systemctl restart  network.service                   | tee -a /var/log/origin-setup.log; \
-    sudo rm -rf /etc/puppet/modules/{openshift_origin,ntp,stdlib}  | tee -a /var/log/origin-setup.log; \
-    sudo git clone https://github.com/dizz/puppet-openshift_origin /etc/puppet/modules/openshift_origin  | tee -a /var/log/origin-setup.log; \
-    sudo git clone https://github.com/puppetlabs/puppetlabs-ntp /etc/puppet/modules/ntp    | tee -a /var/log/origin-setup.log; \
-    sudo git clone https://github.com/puppetlabs/puppetlabs-stdlib /etc/puppet/modules/stdlib | tee -a /var/log/origin-setup.log; \
+    sudo /bin/systemctl restart  network.service                          | tee -a /var/log/origin-setup.log; \
+    sudo /bin/puppet module uninstall openshift/openshift_origin          | tee -a /var/log/origin-setup.log; \
+    sudo /bin/puppet module install openshift/openshift_origin            | tee -a /var/log/origin-setup.log; \
     sudo /bin/puppet apply --verbose /home/vagrant/manifests/configure.pp | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  activemq.service                  | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  cgconfig.service                  | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  cgred.service                     | tee -a /var/log/origin-setup.log; \
+    sudo /bin/systemctl restart  openshift-tc.service              | tee -a /var/log/origin-setup.log; \
     sleep 5; \
-    sudo /bin/systemctl restart  openshift-cgroups.service         | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  httpd.service                     | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  openshift-broker.service          | tee -a /var/log/origin-setup.log; \
     sudo /bin/systemctl restart  openshift-node-web-proxy.service  | tee -a /var/log/origin-setup.log; \

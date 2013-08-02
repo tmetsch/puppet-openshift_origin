@@ -8,7 +8,12 @@ libdir = /usr/libexec/mcollective
 libdir = /opt/rh/ruby193/root/usr/libexec/mcollective
 <%end%>logfile = /var/log/mcollective.log
 loglevel = debug
+<%if scope.lookupvar('::operatingsystem') == "Fedora"%>
+daemonize = 0
+<%end%>
+<%if (scope.lookupvar('::operatingsystem') == "RedHat" or scope.lookupvar('::operatingsystem') == "CentOS")%>
 daemonize = 1
+<%end%>
 direct_addressing = 1
 registerinterval = 30
 
